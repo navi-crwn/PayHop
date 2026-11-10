@@ -123,7 +123,7 @@
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 </svg>
 
-<header class="top"><div class="wrap">
+<header class="top"><div class="wrap" class:full={dash}>
   {#if dash}<button class="btn btn--sm btn--outline btn--icon menu-btn" style="width:32px" aria-label={t('side.menu')} aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name="menu" /></button>{/if}
   <a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
   {#if !dash}

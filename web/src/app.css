@@ -361,3 +361,5 @@ section.blk { padding: 56px 0; }
 }
 @media (prefers-reduced-motion: reduce) { .side { transition: none; } }
 .hide-sm{display:inline}@media (max-width:640px){.hide-sm{display:none}}
+
+.top .wrap.full { width: calc(100% - 32px); }
