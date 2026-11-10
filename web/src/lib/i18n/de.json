@@ -196,5 +196,6 @@
   "cl.commit": "Commit",
   "cl.more": "Mehr anzeigen",
   "nf.title": "Diese Seite gibt es nicht",
-  "nf.back": "Zurück zum Start"
+  "nf.back": "Zurück zum Start",
+  "auth.err_cookies": "Dein Browser hat das Anmelde-Cookie nicht behalten, deshalb kann PayHop dich nicht anmelden. Erlaube Cookies für diese Seite und versuche es erneut."
 }

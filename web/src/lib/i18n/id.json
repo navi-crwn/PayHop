@@ -196,5 +196,6 @@
   "cl.commit": "Commit",
   "cl.more": "Tampilkan lagi",
   "nf.title": "Halaman ini tidak ada",
-  "nf.back": "Kembali ke awal"
+  "nf.back": "Kembali ke awal",
+  "auth.err_cookies": "Browser Anda tidak menyimpan cookie masuk, sehingga PayHop tidak bisa memasukkan Anda. Izinkan cookie untuk situs ini lalu coba lagi."
 }

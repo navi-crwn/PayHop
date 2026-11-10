@@ -196,5 +196,6 @@
   "cl.commit": "Commit",
   "cl.more": "Show more",
   "nf.title": "This page does not exist",
-  "nf.back": "Back to the start"
+  "nf.back": "Back to the start",
+  "auth.err_cookies": "Your browser did not keep the sign-in cookie, so PayHop cannot sign you in. Allow cookies for this site and try again."
 }

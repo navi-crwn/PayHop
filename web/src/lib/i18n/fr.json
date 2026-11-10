@@ -196,5 +196,6 @@
   "cl.commit": "Commit",
   "cl.more": "Afficher plus",
   "nf.title": "Cette page n’existe pas",
-  "nf.back": "Retour à l’accueil"
+  "nf.back": "Retour à l’accueil",
+  "auth.err_cookies": "Votre navigateur n’a pas conservé le cookie de connexion, PayHop ne peut donc pas vous connecter. Autorisez les cookies pour ce site et réessayez."
 }

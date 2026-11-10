@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { i18n, guessLocale, LOCALES, LOCALE_NAMES } from './lib/i18n/index.svelte';
-  import { account, loadAccount, initials, takeAuthError } from './lib/account.svelte';
+  import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly } from './lib/account.svelte';
+  import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
@@ -69,7 +70,13 @@
 
   onMount(() => {
     const stop = startRouter();
-    void loadAccount();
+    const justBack = takeRecheckMark();
+    void loadAccount().then(() => {
+      // a session the hub has not vouched for lately: ask it once, quietly, on this page load only
+      const act = recheckAction({ stale: account.stale, justBack });
+      if (act === 'recheck') recheckQuietly(location.pathname);
+      else if (act === 'cookies') showToast(t('auth.err_cookies'));
+    });
     const err = takeAuthError();
     if (err) showToast(t('auth.err_' + err));
     return stop;

@@ -196,5 +196,6 @@
   "cl.commit": "Commit",
   "cl.more": "Mostrar mais",
   "nf.title": "Esta página não existe",
-  "nf.back": "Voltar ao início"
+  "nf.back": "Voltar ao início",
+  "auth.err_cookies": "Seu navegador não manteve o cookie de login, então o PayHop não consegue entrar. Permita cookies para este site e tente de novo."
 }

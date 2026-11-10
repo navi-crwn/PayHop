@@ -196,5 +196,6 @@
   "cl.commit": "コミット",
   "cl.more": "さらに表示",
   "nf.title": "このページは存在しません",
-  "nf.back": "最初に戻る"
+  "nf.back": "最初に戻る",
+  "auth.err_cookies": "ブラウザがログイン用のCookieを保持しなかったため、PayHopにログインできません。このサイトのCookieを許可してもう一度お試しください。"
 }
