@@ -1,0 +1,45 @@
+# systemd unit for PayHop. Installed by deploy/install.sh to
+# /etc/systemd/system/payhop.service. Settings live in /etc/payhop/payhop.env.
+[Unit]
+Description=PayHop payment QR codes and split bills (browser app)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=payhop
+Group=payhop
+EnvironmentFile=/etc/payhop/payhop.env
+ExecStart=/usr/local/bin/payhop
+Restart=on-failure
+RestartSec=3
+# /var/lib/payhop holds the SQLite database (accounts, sessions; never payment data of guests).
+StateDirectory=payhop
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/payhop
+UMask=0027
+
+# Hardening: PayHop only needs its state directory and the network.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
