@@ -86,12 +86,12 @@
       "url": "https://hel.ink/hop-assets/v8/home/notehop-dark.webp",
       "integrity": "sha384-HFxKgTNDlV3xSBnDVzvIOilgwYL2R/5oy7mfZDWzN0t3oDjYRgz3KapLKouolzbG"
     },
-    "hero_payhop_light": {
-      "url": "https://hel.ink/hop-assets/v8/home/payhop-light.webp",
+    "hero_filehop_light": {
+      "url": "https://hel.ink/hop-assets/v8/home/filehop-light.webp",
       "integrity": "sha384-sQehmbNpKfXLEGZzV7HP5pGrrBefreVGKLT68qTKsyqhvFd6cYRq0YyG8fj8bMbS"
     },
-    "hero_payhop_dark": {
-      "url": "https://hel.ink/hop-assets/v8/home/payhop-dark.webp",
+    "hero_filehop_dark": {
+      "url": "https://hel.ink/hop-assets/v8/home/filehop-dark.webp",
       "integrity": "sha384-sQehmbNpKfXLEGZzV7HP5pGrrBefreVGKLT68qTKsyqhvFd6cYRq0YyG8fj8bMbS"
     }
   },
@@ -257,32 +257,32 @@
       }
     },
     {
-      "slug": "payhop",
-      "name": "PayHop",
+      "slug": "filehop",
+      "name": "FileHop",
       "tagline": "Convert files in your browser; nothing is uploaded.",
-      "url": "https://pay.hel.ink",
+      "url": "https://file.hel.ink",
       "color": "#f59e0b",
       "public": true,
-      "repo": "https://github.com/navi-crwn/PayHop",
+      "repo": "https://github.com/navi-crwn/FileHop",
       "icons": {
         "mark": {
-          "url": "https://hel.ink/hop-assets/v8/apps/payhop/mark.svg",
+          "url": "https://hel.ink/hop-assets/v8/apps/filehop/mark.svg",
           "integrity": "sha384-dpxbxcrgj87UKG3d6a6XHmR3tM2AGs23ad87WrAyma4u0fuvwJr22/+vJI1KFuPz"
         },
         "favicon": {
-          "url": "https://hel.ink/hop-assets/v8/apps/payhop/mark.svg",
+          "url": "https://hel.ink/hop-assets/v8/apps/filehop/mark.svg",
           "integrity": "sha384-dpxbxcrgj87UKG3d6a6XHmR3tM2AGs23ad87WrAyma4u0fuvwJr22/+vJI1KFuPz"
         },
         "icon_192": {
-          "url": "https://hel.ink/hop-assets/v8/apps/payhop/icon-192.png",
+          "url": "https://hel.ink/hop-assets/v8/apps/filehop/icon-192.png",
           "integrity": "sha384-0kZc2dL5Oprovhqkw5mU+W5T5jEwiW5ctX86QYzPcXK67qj4LanFpILwrwNjSumb"
         },
         "icon_512": {
-          "url": "https://hel.ink/hop-assets/v8/apps/payhop/icon-512.png",
+          "url": "https://hel.ink/hop-assets/v8/apps/filehop/icon-512.png",
           "integrity": "sha384-hE/4ybwmRpVryLFUrCz7SKSl/fk7128piwKWn5RQWX04Ww1yFqul8s4wiPp09pKO"
         },
         "apple_touch": {
-          "url": "https://hel.ink/hop-assets/v8/apps/payhop/apple-touch-icon.png",
+          "url": "https://hel.ink/hop-assets/v8/apps/filehop/apple-touch-icon.png",
           "integrity": "sha384-eJiaeNLNgr4nHqF2f9koirWthuuaNqUXsxDKNMBE9/5uDmc3y6KoEaMUTpEUdqnV"
         }
       }
