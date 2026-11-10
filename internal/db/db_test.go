@@ -117,7 +117,7 @@ func TestSavedRowsGoWithTheAccountAndHonourLimits(t *testing.T) {
 	if err := d.DeleteUser("s"); err != nil {
 		t.Fatal(err)
 	}
-	if s, _ := d.Stats(); s.Methods != 0 || s.Bills != 0 {
+	if s, _ := d.SavedCounts(); s.Methods != 0 || s.Bills != 0 {
 		t.Fatalf("rows survived the account: %+v", s)
 	}
 }

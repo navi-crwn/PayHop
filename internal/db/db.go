@@ -226,8 +226,6 @@ type Stats struct {
 	Suspended int64 `json:"users_suspended"`
 	Sessions  int64 `json:"sessions_live"`
 	Active30d int64 `json:"users_active_30d"`
-	Methods   int64 `json:"methods_saved"`
-	Bills     int64 `json:"bills_saved"`
 }
 
 func (d *DB) Stats() (Stats, error) {
@@ -237,9 +235,7 @@ func (d *DB) Stats() (Stats, error) {
 		(SELECT COUNT(*) FROM users),
 		(SELECT COUNT(*) FROM users WHERE status = 'suspended'),
 		(SELECT COUNT(*) FROM sessions WHERE expires_at > ?),
-		(SELECT COUNT(*) FROM users WHERE seen_at > ?),
-		(SELECT COUNT(*) FROM methods),
-		(SELECT COUNT(*) FROM bills)`, now.Unix(), now.AddDate(0, 0, -30).Unix()).
-		Scan(&s.Users, &s.Suspended, &s.Sessions, &s.Active30d, &s.Methods, &s.Bills)
+		(SELECT COUNT(*) FROM users WHERE seen_at > ?)`, now.Unix(), now.AddDate(0, 0, -30).Unix()).
+		Scan(&s.Users, &s.Suspended, &s.Sessions, &s.Active30d)
 	return s, err
 }

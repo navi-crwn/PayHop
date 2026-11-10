@@ -205,7 +205,8 @@ func (a *App) verifiedUser(r *http.Request) *db.User {
 }
 
 // sessionState is the account behind the cookie (nil when there is none) and whether the hub
-// vouched for it recently. A live but not fresh session is "stale": worth one silent trip to the hub.
+// vouched for it recently, or cannot be asked right now (hub down). A live but not fresh session with the hub up
+// is "stale": worth one silent trip to the hub.
 func (a *App) sessionState(r *http.Request) (*db.User, bool) {
 	u := a.currentUser(r)
 	if u == nil {
@@ -213,7 +214,15 @@ func (a *App) sessionState(r *http.Request) (*db.User, bool) {
 	}
 	c, _ := r.Cookie(sessionCookie)
 	at, err := a.db.SessionVerifiedAt(hashHex(c.Value))
-	return u, err == nil && time.Since(at) <= recheckAfter
+	if err == nil && time.Since(at) <= recheckAfter {
+		return u, true
+	}
+	// Family rule: while the hub cannot be reached the session this app already holds stays trusted. Nobody is sent
+	// to the hub, signed out or treated as a guest because of an outage; the check happens once the hub answers again.
+	if a.cfg.SSOEnabled() && !a.hubUp() {
+		return u, true
+	}
+	return u, false
 }
 
 // apiMe tells the browser whether someone is signed in. It always answers 200

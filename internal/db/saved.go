@@ -11,6 +11,16 @@ import (
 
 var ErrLimit = errors.New("limit reached")
 
+// Counts is how many saved rows exist. Only tests use it: nothing about saved data leaves the app,
+// not even a count (/hop/stats carries accounts and sessions only).
+type Counts struct{ Methods, Bills int64 }
+
+func (d *DB) SavedCounts() (Counts, error) {
+	var c Counts
+	err := d.sql.QueryRow(`SELECT (SELECT COUNT(*) FROM methods), (SELECT COUNT(*) FROM bills)`).Scan(&c.Methods, &c.Bills)
+	return c, err
+}
+
 // Row is one stored item: its id, the sealed data and when it was made.
 type Row struct {
 	ID        int64

@@ -310,3 +310,30 @@ func TestSignOutLinkReturnsToApp(t *testing.T) {
 		t.Fatalf("logout_url = %v, want %q", me["logout_url"], want)
 	}
 }
+
+func TestPublicRoutesCarryTheirOwnCanonicalInTheServedHTML(t *testing.T) {
+	d, _ := db.Open(":memory:")
+	t.Cleanup(func() { d.Close() })
+	files := fstest.MapFS{"index.html": {Data: []byte(`<head><link rel="canonical" href="https://pay.example.org/"></head>`)}}
+	a, err := New(Config{Version: "test"}, d, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(a.Handler())
+	t.Cleanup(srv.Close)
+	for path, want := range map[string]string{
+		"/": "https://pay.example.org/", "/generate": "https://pay.example.org/generate", "/split": "https://pay.example.org/split",
+		"/terms": "https://pay.example.org/terms", "/privacy": "https://pay.example.org/privacy", "/changelog": "https://pay.example.org/changelog",
+		"/account": "https://pay.example.org/", // private page: the shell as it is (the app marks it noindex)
+	} {
+		res, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if !strings.Contains(string(b), `<link rel="canonical" href="`+want+`">`) || strings.Count(string(b), "canonical") != 1 {
+			t.Errorf("%s: %s", path, b)
+		}
+	}
+}

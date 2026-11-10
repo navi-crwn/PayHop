@@ -130,7 +130,7 @@ func TestConsentIsRequiredPerMethod(t *testing.T) {
 	if code, _ := call(t, c, "POST", srv.URL+"/api/v1/bills", map[string]any{"format": "epc", "payload": "BCD", "consent": false}); code != 400 {
 		t.Fatalf("bill without consent: %d", code)
 	}
-	if s, _ := a.db.Stats(); s.Methods != 0 || s.Bills != 0 {
+	if s, _ := a.db.SavedCounts(); s.Methods != 0 || s.Bills != 0 {
 		t.Fatalf("something was stored without consent: %+v", s)
 	}
 }
@@ -150,7 +150,7 @@ func TestGuestNeverWrites(t *testing.T) {
 			t.Errorf("guest %s %s: %d %v", tc.m, tc.p, code, out)
 		}
 	}
-	if s, _ := a.db.Stats(); s.Methods != 0 || s.Bills != 0 || s.Users != 0 {
+	if s, _ := a.db.SavedCounts(); s.Methods != 0 || s.Bills != 0 {
 		t.Fatalf("a guest left rows behind: %+v", s)
 	}
 }
@@ -190,7 +190,7 @@ func TestKeyNotSetTurnsSavingOffNotTheApp(t *testing.T) {
 	if code, _ := call(t, c, "POST", srv.URL+"/api/v1/bills", map[string]any{"format": "epc", "payload": "x", "consent": true}); code != 503 {
 		t.Fatalf("bill without key: %d", code)
 	}
-	if s, _ := a.db.Stats(); s.Methods != 0 {
+	if s, _ := a.db.SavedCounts(); s.Methods != 0 {
 		t.Fatal("stored without a key")
 	}
 	res, _ := http.Get(srv.URL + "/generate")
@@ -255,7 +255,7 @@ func TestBillHistoryKeepsTheLast200(t *testing.T) {
 	other := noRedirect()
 	signIn(t, other, srv.URL, "2", "Bo", "j-2", "")
 	call(t, other, "POST", srv.URL+"/api/v1/bills", map[string]any{"format": "epc", "payload": "x", "consent": true})
-	if s, _ := a.db.Stats(); s.Bills != int64(KeepBills)+1 {
+	if s, _ := a.db.SavedCounts(); s.Bills != int64(KeepBills)+1 {
 		t.Fatalf("bills in the database: %d", s.Bills)
 	}
 }
@@ -301,7 +301,7 @@ func TestDeleteOneAndAllAndOwnership(t *testing.T) {
 	if out["deleted"] != float64(2) {
 		t.Fatalf("delete all bills: %v", out)
 	}
-	if s, _ := a.db.Stats(); s.Methods != 1 || s.Bills != 0 {
+	if s, _ := a.db.SavedCounts(); s.Methods != 1 || s.Bills != 0 {
 		t.Fatalf("Bo's method must survive: %+v", s)
 	}
 }
@@ -335,7 +335,7 @@ func TestHubAccountDeletedRemovesEverything(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Fatalf("event: %d", res.StatusCode)
 	}
-	if s, _ := a.db.Stats(); s.Methods != 1 || s.Bills != 0 || s.Users != 1 {
+	if s, _ := a.db.SavedCounts(); s.Methods != 1 || s.Bills != 0 {
 		t.Fatalf("after account.deleted: %+v (only Bo's method should remain)", s)
 	}
 }
@@ -457,12 +457,22 @@ func TestSavedDataNeverShowsThroughHop(t *testing.T) {
 	if len(man.Data.ContentTypes) != 0 {
 		t.Fatalf("the manifest lists content types: %v", man.Data.ContentTypes)
 	}
-	// only counts reach the control center
+	// not even a count reaches the control center: accounts and sessions only
 	res = signed(t, srv, "imperium", "GET", "/hop/stats", nil)
 	st := decode(t, res)
 	tot := st["data"].(map[string]any)["totals"].(map[string]any)
-	if tot["methods_saved"] != float64(1) || tot["bills_saved"] != float64(1) {
-		t.Fatalf("stats: %v", tot)
+	for _, k := range []string{"users", "users_suspended", "sessions_live", "users_active_30d"} {
+		if _, ok := tot[k]; !ok {
+			t.Fatalf("stats lost %q: %v", k, tot)
+		}
+	}
+	if len(tot) != 4 {
+		t.Fatalf("stats must carry exactly the four account and session numbers: %v", tot)
+	}
+	for k := range tot {
+		if strings.Contains(k, "method") || strings.Contains(k, "bill") || strings.Contains(k, "saved") {
+			t.Fatalf("stats shows saved data: %v", tot)
+		}
 	}
 }
 

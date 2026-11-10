@@ -61,7 +61,7 @@ openssl rand -base64 32          # put the output in PAYHOP_PROFILE_KEY=, nowher
   2. Run `sudo -u payhop bash -c 'set -a; . /etc/payhop/payhop.env; set +a; /usr/local/bin/payhop reencrypt'`.
      It rewrites every row under the new key in one transaction and prints how many.
      If a row cannot be opened it changes nothing and says so. Then remove `PAYHOP_PROFILE_KEY_PREV` and restart.
-- **Never in logs or Imperium:** nothing saved is logged and `/hop/*` only counts rows (`methods_saved`, `bills_saved`).
+- **Never in logs or Imperium:** nothing saved is logged and `/hop/*` carries no saved data, not even a count (`/hop/stats` has accounts and sessions only).
   When a HOP ID is deleted the hub's `account.deleted` event removes the account's rows with it.
 
 ## 5. Checks
