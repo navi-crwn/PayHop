@@ -180,4 +180,3 @@ func (d *DB) Reseal(fn func(kind string, userID int64, data []byte) ([]byte, err
 	}
 	return changed, tx.Commit()
 }
-
