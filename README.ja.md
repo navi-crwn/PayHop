@@ -1,6 +1,6 @@
 <p align="center">🌐 <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.de.md">Deutsch</a> · <a href="README.id.md">Bahasa Indonesia</a> · <b>日本語</b> · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.ru.md">Русский</a></p>
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/hero-dark.png"><img src="docs/readme/hero-light.png" alt="PayHop" width="720"></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/hero-dark.webp"><img src="docs/readme/hero-light.webp" alt="PayHop" width="720"></picture></p>
 
 <h1 align="center">PayHop</h1>
 
@@ -17,6 +17,11 @@
 
 <p align="center"><sub>Go · Svelte 5 · 9 languages · MIT</sub></p>
 
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <a href="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml"><img src="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+</p>
+
 > [!IMPORTANT]
 > PayHopはお金を処理しません。入力内容からQRコードを作り、そのコードの支払い先の名前を表示し、PNGにも印刷します。すべての形式は引き続き**ウォレットでは未検証**と表示されます（[docs/WALLET-MATRIX.md](docs/WALLET-MATRIX.md)参照）。まず少額でスキャンしてください。
 
@@ -25,7 +30,7 @@
 - 6つの形式の支払いQRを作成。受取人の名前は必須で、コードの横に表示され、PNGではコードの下に印刷されます。ダウンロード前に確認のチェックが必要です。
 - 割り勘：参加者、品目、誰が分けたか、税とチップは注文額に応じて配分、端数は支払った人が負担。金額は正確な整数なので、各自の分の合計は常に総額と一致します。
 - 読み込み後はオフラインで動作。9言語、ライト／ダーク、動きを減らす設定では静止ページ。
-- HOP IDでのログインは動作します。支払い方法や履歴の保存は今回のリリースには含まれません。
+- HOP ID でログインすると、支払い方法（最大 20 件）と直近 200 件の請求を保存できます。1 件ずつ、同意のチェックボックスにチェックを入れた後にのみ保存されます。サーバー上で暗号化され（AES-256-GCM）、あなたのアカウントだけが見られ、いつでも削除できます。ゲストがサーバーに書き込むことはありません。サーバーに鍵（`PAYHOP_PROFILE_KEY`、[docs/DEPLOY.md](docs/DEPLOY.md) 参照）がない間は、保存機能はオフのままです。
 
 ## 自分で運用する
 

@@ -1,6 +1,6 @@
 <p align="center">🌐 <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.de.md">Deutsch</a> · <a href="README.id.md">Bahasa Indonesia</a> · <a href="README.ja.md">日本語</a> · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <b>Русский</b></p>
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/hero-dark.png"><img src="docs/readme/hero-light.png" alt="PayHop" width="720"></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/hero-dark.webp"><img src="docs/readme/hero-light.webp" alt="PayHop" width="720"></picture></p>
 
 <h1 align="center">PayHop</h1>
 
@@ -17,6 +17,11 @@
 
 <p align="center"><sub>Go · Svelte 5 · 9 languages · MIT</sub></p>
 
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <a href="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml"><img src="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+</p>
+
 > [!IMPORTANT]
 > PayHop не обрабатывает деньги. Он строит QR из введённых вами данных, показывает имя, которому заплатит этот код, и печатает его на PNG. Каждый формат по-прежнему помечен как **ещё не проверен в кошельке** (см. [docs/WALLET-MATRIX.md](docs/WALLET-MATRIX.md)): сначала сканируйте с небольшой суммой.
 
@@ -25,7 +30,7 @@
 - Создаёт платёжные QR в шести форматах. Имя получателя обязательно, показывается рядом с кодом и печатается под ним на PNG; перед скачиванием нужно поставить отметку подтверждения.
 - Делит счёт: люди, позиции, кто какую делит, налог и чаевые по заказу каждого, округление берёт на себя заплативший. Суммы — точные целые числа, поэтому доли всегда дают итог.
 - После загрузки работает офлайн, на девяти языках, светлая и тёмная темы, статичная страница при уменьшенной анимации.
-- Вход через HOP ID работает; сохранение способов оплаты и истории в этот релиз не входит.
+- С HOP ID можно сохранять способы оплаты (до 20) и последние 200 счетов — по одному и только после того, как вы поставили галочку согласия. Они шифруются на сервере (AES-256-GCM), видны только вашему аккаунту и удаляются в любой момент; гости ничего не записывают на сервер. Пока у сервера нет ключа (`PAYHOP_PROFILE_KEY`, см. [docs/DEPLOY.md](docs/DEPLOY.md)), сохранение остаётся выключенным.
 
 ## Запустить у себя
 

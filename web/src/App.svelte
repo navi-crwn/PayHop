@@ -52,6 +52,21 @@
     document.documentElement.dataset.theme = theme;
   });
 
+  // the address search engines should keep for this page, and no index for the signed-in page
+  $effect(() => {
+    const p = known(route.path) ? route.path : '/';
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p));
+    let robots = document.querySelector('meta[name="robots"]');
+    if (route.path === '/account') {
+      if (!robots) {
+        robots = document.createElement('meta');
+        robots.setAttribute('name', 'robots');
+        document.head.appendChild(robots);
+      }
+      robots.setAttribute('content', 'noindex');
+    } else robots?.remove();
+  });
+
   $effect(() => {
     void i18n.load(locale).then(() => {
       document.title = t('app.title');
