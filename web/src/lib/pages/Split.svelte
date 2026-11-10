@@ -210,7 +210,7 @@
               <div class="res-row">
                 <div>
                   <div class="n">{p.name}{#if isPayer} <span class="chip chip--brand">{t('split.paid_bill')}</span>{/if}</div>
-                  <div class="s num">{t('split.items_amt', { a: money(p.subtotal), b: money(p.charges) })}{#if p.roundingDelta} · {t('split.rounding', { a: (p.roundingDelta > 0 ? '+' : '-') + money(Math.abs(p.roundingDelta)) })}{/if}</div>
+                  <div class="s num">{t('split.items_amt', { a: money(p.subtotal), b: money(p.charges) })}{#if p.roundingDelta}&nbsp;·&nbsp;{t('split.rounding', { a: (p.roundingDelta > 0 ? '+' : '-') + money(Math.abs(p.roundingDelta)) })}{/if}</div>
                 </div>
                 <div class="amt num">{money(p.due)}</div>
                 {#if isPayer || p.due <= 0}<span></span>{:else}<button class="btn btn--sm btn--outline" onclick={() => (pick = p.id)}><Icon name="qr" />{t('split.qr')}</button>{/if}

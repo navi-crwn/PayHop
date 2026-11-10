@@ -1,1 +1,17 @@
-{"schema":1,"sources":{},"entries":[]}
+{
+  "schema": 1,
+  "sources": {
+    "PayHop": "6c5c26010999b17dd60d95af2e981d2f2fddcece"
+  },
+  "entries": [
+    {
+      "kind": "commit",
+      "date": "2026-11-10T16:48:42+01:00",
+      "title": "Add license and readme",
+      "url": "https://github.com/navi-crwn/PayHop/commit/6c5c26010999b17dd60d95af2e981d2f2fddcece",
+      "id": "6c5c2601",
+      "app": "PayHop",
+      "repo": "PayHop"
+    }
+  ]
+}
