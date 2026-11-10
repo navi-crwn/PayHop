@@ -22,7 +22,7 @@
   let newPerson = $state('');
   let newItem = $state('');
   let newPrice = $state('');
-  let priceBad = $state(false);
+  let priceErr = $state('');
   let tax = $state('');
   let tip = $state('');
   let currency = $state('USD');
@@ -35,18 +35,29 @@
   const exp = $derived(exponent(currency));
   const payer = $derived(people.find((p) => p.id === payerId) ?? people[0]);
 
-  function minor(price: string): number {
+  // ONE amount parser (lib/pay) for the whole app: the price field and the generator read amounts the same way.
+  // Nothing is guessed: a thousands separator or a decimal part the currency does not have is an error shown beside the item.
+  interface Parsed { m: number; warns: string[]; err: string }
+  function parseItem(price: string): Parsed {
+    const warns: string[] = [];
     try {
-      const m = parseAmount(price, currency, []);
-      return m == null ? 0 : Number(m);
-    } catch {
-      return 0;
+      const m = parseAmount(price, currency, warns);
+      return { m: m == null ? 0 : Number(m), warns, err: m == null ? 'amount_format' : '' };
+    } catch (e) {
+      if (e instanceof HopPayError) return { m: 0, warns, err: e.code };
+      throw e;
     }
   }
-  const bp = (v: string) => {
-    const n = parseFloat(String(v).replace(',', '.'));
-    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
-  };
+  const parsed = $derived(items.map((it) => parseItem(it.price)));
+  /** tax / tip: a plain number with at most two decimals, to basis points; null when it is not one */
+  function pct(v: string): number | null {
+    const x = v.trim();
+    if (!x) return 0;
+    if (!/^\d+([.,]\d{1,2})?$/.test(x)) return null;
+    return Math.round(parseFloat(x.replace(',', '.')) * 100);
+  }
+  const taxBp = $derived(pct(tax));
+  const tipBp = $derived(pct(tip));
   function money(m: number): string {
     try {
       return new Intl.NumberFormat(i18n.locale, { style: 'currency', currency, minimumFractionDigits: exp, maximumFractionDigits: exp }).format(m / 10 ** exp);
@@ -57,15 +68,16 @@
 
   const calc = $derived.by(() => {
     if (!people.length || !items.length) return null;
+    if (parsed.some((p) => p.err) || taxBp === null || tipBp === null) return null;
     try {
       const charges = [
-        { label: t('split.charge_tax'), percent: bp(tax) },
-        { label: t('split.charge_tip'), percent: bp(tip) }
+        { label: t('split.charge_tax'), percent: taxBp },
+        { label: t('split.charge_tip'), percent: tipBp }
       ].filter((c) => c.percent > 0);
       return splitBill({
         currency,
         people,
-        items: items.map((i) => ({ name: i.name, price: minor(i.price), shares: i.shares.length ? i.shares : undefined })),
+        items: items.map((i) => ({ name: i.name, price: parsed[items.indexOf(i)].m, shares: i.shares.length ? i.shares : undefined })),
         charges,
         payerId: payer?.id,
         roundTo: Number(roundTo) * 10 ** exp
@@ -93,16 +105,15 @@
   function addItem() {
     const name = newItem.trim();
     if (!name) return;
-    try {
-      const m = parseAmount(newPrice, currency, []);
-      if (m == null) throw new Error('empty');
-      items.push({ id: uid('i'), name, price: newPrice.trim(), shares: [] });
-      newItem = '';
-      newPrice = '';
-      priceBad = false;
-    } catch {
-      priceBad = true;
+    const r = parseItem(newPrice);
+    if (r.err) {
+      priceErr = r.err;
+      return;
     }
+    items.push({ id: uid('i'), name, price: newPrice.trim(), shares: [] });
+    newItem = '';
+    newPrice = '';
+    priceErr = '';
   }
   function toggleShare(it: Item, id: string) {
     it.shares = it.shares.includes(id) ? it.shares.filter((s) => s !== id) : [...it.shares, id];
@@ -111,6 +122,11 @@
   function errText(code: string): string {
     return t(ERR.has('err.' + code) ? 'err.' + code : 'err.other');
   }
+  const warnText = (w: string) => t('warn.' + w);
+  const issues = $derived(
+    parsed.flatMap((p, i) => [...(p.err ? [`${items[i].name}: ${errText(p.err)}`] : []), ...p.warns.map((w) => `${items[i].name}: ${warnText(w)}`)])
+  );
+  const pctBad = $derived(taxBp === null || tipBp === null);
 
   const share = $derived.by(() => {
     if (!calc || !payer) return null;
@@ -118,7 +134,7 @@
     const p = others.find((x: { id: string }) => x.id === pick) ?? others[0];
     if (!p) return null;
     const f = formats[method as keyof typeof formats];
-    if (f.currencies && !f.currencies.includes(currency)) return { p, error: t('err.bad_currency') };
+    if (f.currencies && !f.currencies.includes(currency)) return { p, error: t('err.currency_unsupported') };
     try {
       const params = { ...mvals[method], amount: formatMinor(p.due, currency), currency };
       const out = build(method, params);
@@ -153,10 +169,10 @@
           <table class="items">
             <thead><tr><th>{t('split.item')}</th><th class="p">{t('split.price')}</th><th>{t('split.shared_by')}</th><th class="del"></th></tr></thead>
             <tbody>
-              {#each items as it (it.id)}
+              {#each items as it, idx (it.id)}
                 <tr>
                   <td>{it.name}</td>
-                  <td class="p num">{money(minor(it.price))}</td>
+                  <td class="p num" class:bad={parsed[idx]?.err}>{parsed[idx]?.err ? it.price : money(parsed[idx]?.m ?? 0)}</td>
                   <td>
                     <div class="who-t">
                       <button type="button" class="toggle" aria-pressed={!it.shares.length} onclick={() => (it.shares = [])}>{t('split.everyone')}</button>
@@ -173,17 +189,18 @@
         {/if}
         <form class="row" style="margin-top:14px;align-items:flex-end" onsubmit={(e) => { e.preventDefault(); addItem(); }}>
           <label class="field field--narrow" style="max-width:12rem"><span class="lbl">{t('split.item')}</span><input class="input" id="newItem" bind:value={newItem} placeholder={t('split.person_ph')} maxlength="40"></label>
-          <label class="field field--short" style="max-width:8rem"><span class="lbl">{t('split.price')}</span><input class="input num" id="newPrice" bind:value={newPrice} inputmode="decimal" placeholder={exp ? '0.00' : '0'} aria-invalid={priceBad ? 'true' : undefined}></label>
+          <label class="field field--short" style="max-width:8rem"><span class="lbl">{t('split.price')}</span><input class="input num" id="newPrice" bind:value={newPrice} inputmode="decimal" placeholder={exp ? '0.00' : '0'} aria-invalid={priceErr ? 'true' : undefined}></label>
           <button class="btn btn--outline" type="submit" id="addItem">{t('split.add_item')}</button>
         </form>
-        {#if priceBad}<p class="err">{t('split.bad_price')}</p>{/if}
+        {#if priceErr}<p class="err">{errText(priceErr)}</p>{/if}
+        {#if issues.length}<ul class="warns" id="issues">{#each issues as m}<li>{m}</li>{/each}</ul>{/if}
       </div>
 
       <div class="card">
         <h2>{t('split.extras')}</h2>
         <div class="row">
-          <label class="field field--xs"><span class="lbl">{t('split.tax')}</span><input class="input num" id="tax" bind:value={tax} inputmode="decimal" placeholder="0"></label>
-          <label class="field field--xs"><span class="lbl">{t('split.tip')}</span><input class="input num" id="tip" bind:value={tip} inputmode="decimal" placeholder="0"></label>
+          <label class="field field--xs"><span class="lbl">{t('split.tax')}</span><input class="input num" id="tax" bind:value={tax} inputmode="decimal" placeholder="0" aria-invalid={taxBp === null ? 'true' : undefined}></label>
+          <label class="field field--xs"><span class="lbl">{t('split.tip')}</span><input class="input num" id="tip" bind:value={tip} inputmode="decimal" placeholder="0" aria-invalid={tipBp === null ? 'true' : undefined}></label>
           <label class="field field--short"><span class="lbl">{t('split.currency')}</span>
             <select class="select" id="cur" bind:value={currency}>{#each CURRENCIES as c}<option>{c}</option>{/each}</select></label>
           <label class="field field--short"><span class="lbl">{t('split.payer')}</span>
@@ -194,6 +211,7 @@
               {#each [1, 5, 10, 100, 1000] as r}<option value={String(r)}>{r}</option>{/each}
             </select></label>
         </div>
+        {#if pctBad}<p class="err">{errText('percent_format')}</p>{/if}
         <p class="hint">{t('split.round_hint')}</p>
       </div>
     </div>
@@ -202,7 +220,7 @@
       <div class="card" aria-live="polite">
         <h2>{t('split.owes')}</h2>
         {#if !calc}
-          <p class="hint" id="result">{t('split.empty')}</p>
+          <p class="hint" id="result">{parsed.some((p) => p.err) || pctBad ?t('split.fix_items') : t('split.empty')}</p>
         {:else}
           <div id="result">
             {#each calc.people as p (p.id)}

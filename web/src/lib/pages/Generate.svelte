@@ -53,7 +53,7 @@
     return errText(result.code);
   }
   function amountText(d: Built['display']): string {
-    return d.amount ? `${d.amount} ${d.currency}` : '';
+    return d.amount ? `${d.amount} ${d.currency}${d.token ? ' (' + d.token + ')' : ''}` : '';
   }
 
   function slug(s: string): string {

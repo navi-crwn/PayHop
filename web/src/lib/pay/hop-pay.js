@@ -33,10 +33,12 @@ function utf8(s) { return Array.from(new TextEncoder().encode(s)); }
 const byteLength = (s) => new TextEncoder().encode(s).length;
 
 // ---------------------------------------------------------------- text hygiene
-// Control characters, bidi overrides/isolates, zero-width and format characters never belong in a payee name.
-const HIDDEN = new RegExp('[' + [[0,31],[127,159],[173,173],[1564,1564],[6158,6158],[8203,8207],[8234,8238],[8288,8303],[65279,65279],[65529,65531]].map(function (r) { return String.fromCharCode(r[0]) + '-' + String.fromCharCode(r[1]); }).join('') + ']', 'g'); // C0/C1 controls, soft hyphen, bidi marks and overrides, zero-width and format characters
-
-const HIDDEN_TEST = new RegExp(HIDDEN.source);
+// What never belongs in a payee name: control (Cc) and format (Cf: zero-width, bidi marks and overrides, soft hyphen,
+// tag characters, ...) characters, the Hangul fillers (U+115F, U+1160, U+3164, U+FFA0), the combining grapheme joiner
+// and the variation selectors. ZWNJ and ZWJ are kept only BETWEEN letters (they are part of Persian, Devanagari and
+// other scripts) and removed at the start, at the end and next to each other.
+const HIDDEN = /(?![‌‍])[\p{Cc}\p{Cf}]|[͏ᅟᅠㅤﾠ︀-️\u{E0100}-\u{E01EF}]|(?<![\p{L}\p{M}])[‌‍]|[‌‍](?![\p{L}\p{M}])/gu;
+const HIDDEN_TEST = new RegExp(HIDDEN.source, 'u');
 function cleanText(value, field, warnings, max) {
   let s = String(value == null ? '' : value).normalize('NFC');
   if (HIDDEN_TEST.test(s)) warnings.push('hidden_characters_removed:' + field);
@@ -66,15 +68,29 @@ function parseCurrency(cur, field) {
   return c;
 }
 
-/** "12.5", "12,5", 12.5 -> BigInt minor units. Rejects zero, negative, exponent notation, thousands separators. */
+/**
+ * One amount parser for the whole app (the generator and the split-bill screen).
+ * Accepted: digits with, for currencies that have minor units, ONE decimal separator ("12.5", "12,5").
+ * A thousands separator is never guessed at: "50.000", "50,000" and "1,000.50" are refused with
+ * `amount_separator`; a currency without minor units (IDR, JPY, ...) refuses any decimal part
+ * (`amount_no_decimals`). More decimals than the currency has are rounded half up and reported in `warnings`
+ * (`amount_rounded`); a three-digit tail after a short integer ("1.005") is the thousands look-alike and is refused.
+ * Returns BigInt minor units, or null for an empty field.
+ */
 function parseAmount(raw, cur, warnings) {
   if (raw === '' || raw == null) return null;
-  let s = String(raw).trim();
-  if (/[eE]/.test(s)) fail('amount_format', 'amount');
-  if (/^\d+,\d{1,}$/.test(s) && !s.includes('.')) s = s.replace(',', '.');
-  if (!/^\d+(\.\d+)?$/.test(s)) fail('amount_format', 'amount');
+  const s = String(raw).trim();
+  if (/[eE]/.test(s) || !/^[\d.,]+$/.test(s)) fail('amount_format', 'amount');
   const exp = exponent(cur);
-  let [int, frac = ''] = s.split('.');
+  const seps = (s.match(/[.,]/g) || []).length;
+  if (seps > 1) fail('amount_separator', 'amount'); // "1,000.50", "1.000.000"
+  if (seps === 1) {
+    const [a, b] = s.split(/[.,]/);
+    if (a === '' || b === '') fail('amount_format', 'amount'); // ".5", "5."
+    if (exp === 0) fail(b.length === 3 && a.length <= 3 ? 'amount_separator' : 'amount_no_decimals', 'amount'); // "50.000", "50,5"
+    if (b.length === 3 && a.length <= 3 && exp < 3) fail('amount_separator', 'amount'); // "1.000", "1,005"
+  }
+  const [int, frac = ''] = s.split(/[.,]/);
   let minor;
   if (frac.length > exp) {
     // Round half up to the smallest unit and say so.
@@ -97,18 +113,21 @@ const mask = (id) => id.length <= 8 ? id : id.slice(0, 4) + '…' + id.slice(-4)
 const enc = encodeURIComponent;
 
 function display(scheme, o) {
-  return Object.assign({ scheme, receiverName: '', receiverNameKind: 'handle', receiverId: '', amount: null, currency: '', country: '', tested: false }, o);
+  return Object.assign({ scheme, receiverName: '', receiverNameKind: 'handle', receiverId: '', amount: null, currency: '', token: '', country: '', tested: false }, o);
 }
 
 // ---------------------------------------------------------------- format builders
+// Currencies PayPal.me accepts in a link (recalled from PayPal's list, see docs/WALLET-MATRIX.md: unverified).
+const PAYPAL_CUR = ['AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'SEK', 'SGD', 'THB', 'TWD', 'USD'];
 const FORMATS = {};
 
 FORMATS.paypal = {
-  group: 1, confidence: 'high', country: '', currencies: null,
+  group: 1, confidence: 'high', country: '', currencies: PAYPAL_CUR,
   build(p, w) {
     const user = String(p.user || '').trim().replace(/^.*paypal\.me\//i, '').replace(/^@/, '');
     if (!/^[A-Za-z0-9]{1,20}$/.test(user)) fail('bad_handle', 'user', 'PayPal.me names are 1-20 letters or digits');
     const cur = p.currency ? parseCurrency(p.currency) : '';
+    if (cur && !PAYPAL_CUR.includes(cur)) fail('currency_unsupported', 'currency');
     const minor = parseAmount(p.amount, cur || 'USD', w);
     if (minor && !cur) fail('currency_required', 'currency');
     const amount = minor ? formatMinor(minor, cur) : null;
@@ -184,9 +203,10 @@ FORMATS.solana = {
     if (message) q.push('message=' + enc(message));
     if (memo) q.push('memo=' + enc(memo));
     if (!label) w.push('no_label');
+    if (mint && amount) w.push('spl_decimals_unchecked');
     return {
       payload: 'solana:' + recipient + (q.length ? '?' + q.join('&') : ''),
-      display: display('Solana Pay', { receiverName: label || mask(recipient), receiverNameKind: label ? 'label' : 'address', receiverId: mask(recipient), amount, currency: mint ? 'SPL' : 'SOL' }),
+      display: display('Solana Pay', { receiverName: label || mask(recipient), receiverNameKind: label ? 'label' : 'address', receiverId: mask(recipient), amount, currency: mint ? 'SPL' : 'SOL', token: mint ? mask(mint) : '' }),
     };
   },
 };
@@ -200,7 +220,7 @@ FORMATS.upi = {
     const note = cleanText(p.note, 'note', w, 80);
     const minor = parseAmount(p.amount, 'INR', w);
     const amount = minor ? formatMinor(minor, 'INR') : null;
-    const q = ['pa=' + vpa.replace('@', '%40'), 'pn=' + enc(name)];
+    const q = ['pa=' + vpa, 'pn=' + enc(name)]; // literal @, as in NPCI's examples (unverified, see WALLET-MATRIX)
     if (amount) q.push('am=' + amount);
     q.push('cu=INR');
     if (note) q.push('tn=' + enc(note));
@@ -213,7 +233,7 @@ FORMATS.upi = {
 };
 
 // IBAN length by country (SEPA area plus a few neighbours).
-const IBAN_LEN = { AT: 20, BE: 16, BG: 22, CH: 21, CY: 28, CZ: 24, DE: 22, DK: 18, EE: 20, ES: 24, FI: 18, FR: 27, GB: 22, GR: 27, HR: 21, HU: 28, IE: 22, IS: 26, IT: 27, LI: 21, LT: 20, LU: 20, LV: 21, MC: 27, MT: 31, NL: 18, NO: 15, PL: 28, PT: 25, RO: 24, SE: 24, SI: 19, SK: 24, SM: 27, VA: 22 };
+const IBAN_LEN = { AD: 24, AT: 20, BE: 16, BG: 22, CH: 21, CY: 28, CZ: 24, DE: 22, DK: 18, EE: 20, ES: 24, FI: 18, FR: 27, GB: 22, GI: 23, GR: 27, HR: 21, HU: 28, IE: 22, IS: 26, IT: 27, LI: 21, LT: 20, LU: 20, LV: 21, MC: 27, MT: 31, NL: 18, NO: 15, PL: 28, PT: 25, RO: 24, SE: 24, SI: 19, SK: 24, SM: 27, VA: 22 };
 
 function ibanValid(raw) {
   const iban = String(raw || '').replace(/\s+/g, '').toUpperCase();

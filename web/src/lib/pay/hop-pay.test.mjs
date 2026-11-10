@@ -23,14 +23,14 @@ test('amounts: minor units, rounding with a warning, rejects', () => {
   assert.equal(H.parseAmount('1000', 'JPY', w), 1000n);
   assert.equal(H.parseAmount('1.234', 'KWD', w), 1234n);
   assert.deepEqual(w, []);
-  assert.equal(H.parseAmount('1.005', 'USD', w), 101n); // half up
+  assert.equal(H.parseAmount('1.0051', 'USD', w), 101n); // half up
   assert.deepEqual(w, ['amount_rounded']);
   assert.equal(H.parseAmount('', 'USD', []), null);
   throwsCode(() => H.parseAmount('0', 'USD', []), 'amount_not_positive');
-  throwsCode(() => H.parseAmount('0.001', 'USD', []), 'amount_not_positive'); // rounds to zero
+  throwsCode(() => H.parseAmount("0.0004", "USD", []), "amount_not_positive"); // rounds to zero
   throwsCode(() => H.parseAmount('-5', 'USD', []), 'amount_format');
   throwsCode(() => H.parseAmount('1e3', 'USD', []), 'amount_format');
-  throwsCode(() => H.parseAmount('1,000.50', 'USD', []), 'amount_format');
+  throwsCode(() => H.parseAmount('1,000.50', 'USD', []), 'amount_separator');
   assert.equal(H.parseAmount('12345678901.00', 'USD', []), 1234567890100n); // 13 digits of minor units is the cap
   throwsCode(() => H.parseAmount('123456789012.00', 'USD', []), 'amount_too_large');
   assert.equal(H.formatMinor(5n, 'USD'), '0.05');
@@ -79,6 +79,8 @@ test('Solana Pay', () => {
   const r = H.build('solana', { recipient: sys, amount: '1.5', splToken: usdc, label: 'Cafe Ana', message: 'Order #12' });
   assert.equal(r.payload, 'solana:' + sys + '?amount=1.5&spl-token=' + usdc + '&label=Cafe%20Ana&message=Order%20%2312');
   assert.equal(r.display.currency, 'SPL');
+  assert.ok(r.warnings.includes('spl_decimals_unchecked'));
+  assert.equal(r.display.token, 'EPjF…Dt1v');
   assert.deepEqual(H.build('solana', { recipient: sys }).warnings, ['no_label']);
   throwsCode(() => H.build('solana', { recipient: sys + 'x' }), 'bad_address');
   throwsCode(() => H.build('solana', { recipient: '0OIl' + sys }), 'bad_address'); // 0, O, I, l are not base58
@@ -88,7 +90,7 @@ test('Solana Pay', () => {
 
 test('UPI', () => {
   const r = H.build('upi', { vpa: 'shop@okbank', name: 'Warung Sri', amount: '250', note: 'Order 7' });
-  assert.equal(r.payload, 'upi://pay?pa=shop%40okbank&pn=Warung%20Sri&am=250.00&cu=INR&tn=Order%207');
+  assert.equal(r.payload, 'upi://pay?pa=shop@okbank&pn=Warung%20Sri&am=250.00&cu=INR&tn=Order%207');
   assert.equal(r.display.receiverName, 'Warung Sri');
   throwsCode(() => H.build('upi', { vpa: 'shop@okbank', name: '' }), 'receiver_name_required'); // T9
   throwsCode(() => H.build('upi', { vpa: 'shop', name: 'A' }), 'bad_handle');
@@ -302,4 +304,57 @@ test('split: one person and a payer who is alone', () => {
   const r = H.splitBill({ people: [{ id: 'a', name: 'A' }], items: [{ name: 'x', price: 999 }], charges: [{ percent: 1000 }], payerId: 'a', roundTo: 100 });
   assert.equal(r.total, 1099);
   assert.equal(r.people[0].due, 1099);
+});
+
+// ---- Audit round: one strict amount parser
+test('audit: "50.000" and "50,000" are never read as 50 (the 1000x error)', () => {
+  for (const bad of ['50.000', '50,000', '1.000.000', '1,000,000', '12.500']) throwsCode(() => H.parseAmount(bad, 'IDR', []), 'amount_separator');
+  assert.equal(H.parseAmount('50000', 'IDR', []), 50000n);
+  for (const bad of ['50.5', '50,5', '50.50']) throwsCode(() => H.parseAmount(bad, 'JPY', []), 'amount_no_decimals');
+  // the same through the builders, so Generate cannot write a 1000x smaller QR either
+  throwsCode(() => H.build('paypal', { user: 'jdoe', amount: '50.000', currency: 'JPY' }), 'amount_separator');
+});
+
+test('audit: thousands look-alikes are refused for two-decimal currencies, real decimals are not', () => {
+  for (const bad of ['1.000', '1,000', '999.000', '1,000.50']) throwsCode(() => H.parseAmount(bad, 'USD', []), 'amount_separator');
+  const w = [];
+  assert.equal(H.parseAmount('1,5', 'EUR', w), 150n);
+  assert.equal(H.parseAmount('12.50', 'USD', w), 1250n);
+  assert.equal(H.parseAmount('1.234', 'KWD', w), 1234n); // three decimals ARE the currency's decimals
+  assert.equal(H.parseAmount('0.0051', 'USD', w), 1n);
+  assert.deepEqual(w, ['amount_rounded']);
+  throwsCode(() => H.parseAmount('.5', 'USD', []), 'amount_format');
+  throwsCode(() => H.parseAmount('5.', 'USD', []), 'amount_format');
+});
+
+// ---- Audit round: names
+test('audit: Hangul fillers, tag characters, variation selectors and CGJ are removed and reported', () => {
+  for (const ch of [0x115f, 0x1160, 0x3164, 0xffa0, 0xe0041, 0xe007f, 0xfe0f, 0xe0100, 0x34f]) {
+    const r = H.build('upi', { vpa: 'a1@bank', name: 'Ana' + U(ch) + 'Bo' });
+    assert.equal(r.display.receiverName, 'Ana Bo', 'U+' + ch.toString(16));
+    assert.ok(r.warnings.some((x) => x.startsWith('hidden_characters_removed')), 'U+' + ch.toString(16));
+  }
+});
+
+test('audit: ZWJ and ZWNJ stay between letters (Persian, Devanagari) and go elsewhere', () => {
+  const persian = 'می' + U(0x200c) + 'خواهم'; // ZWNJ inside a word
+  const r = H.build('upi', { vpa: 'a1@bank', name: persian });
+  assert.equal(r.display.receiverName, persian);
+  assert.deepEqual(r.warnings, []);
+  const dev = 'क' + U(0x94d) + U(0x200d) + 'ष'; // virama + ZWJ + letter
+  assert.equal(H.build('upi', { vpa: 'a1@bank', name: dev }).display.receiverName, dev);
+  for (const bad of [U(0x200d) + 'Ana', 'Ana' + U(0x200c), 'A' + U(0x200d) + U(0x200c) + 'B', 'A ' + U(0x200d) + ' B']) {
+    const o = H.build('upi', { vpa: 'a1@bank', name: bad });
+    assert.ok(!/[‌‍]/.test(o.display.receiverName), JSON.stringify(bad));
+    assert.ok(o.warnings.length > 0, JSON.stringify(bad));
+  }
+});
+
+// ---- Audit round: formats
+test('audit: PayPal.me refuses a currency PayPal does not list; IBAN of Andorra and Gibraltar pass', () => {
+  throwsCode(() => H.build('paypal', { user: 'jdoe', amount: '5', currency: 'IDR' }), 'currency_unsupported');
+  assert.ok(H.build('paypal', { user: 'jdoe', amount: '5', currency: 'EUR' }));
+  assert.ok(!H.formats.paypal.currencies.includes('IDR'));
+  assert.equal(H.ibanValid('AD1200012030200359100100'), true);
+  assert.equal(H.ibanValid('GI75NWBK000000007099453'), true);
 });

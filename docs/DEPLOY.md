@@ -49,7 +49,9 @@ curl -sI https://pay.hel.ink/ | grep -i content-security-policy    # no CDN host
 ```
 
 PayHop sends no COOP/COEP headers (it needs no SharedArrayBuffer). Do not add a second
-`Content-Security-Policy` in nginx.
+`Content-Security-Policy` in nginx. **HSTS** is not sent by the Go server or by this nginx vhost: like FileHop (which has none
+in its code or vhost), PayHop leaves it to the edge. Turn it on in Cloudflare (SSL/TLS > Edge Certificates > HSTS) for
+`hel.ink` once, which covers every HOP app.
 
 ## Rollback and removal
 

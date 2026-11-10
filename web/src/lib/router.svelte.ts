@@ -1,7 +1,7 @@
 /* A tiny History API router: a path, and a click handler that keeps same-origin links in the app.
    The Go server answers every extension-less path with the shell, so deep links work. */
 
-export const ROUTES = ['/', '/generate', '/split', '/account', '/changelog'] as const;
+export const ROUTES = ['/', '/generate', '/split', '/account', '/changelog', '/terms', '/privacy'] as const;
 
 export const route = $state({ path: normalize(location.pathname) });
 

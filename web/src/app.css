@@ -363,3 +363,23 @@ section.blk { padding: 56px 0; }
 .hide-sm{display:inline}@media (max-width:640px){.hide-sm{display:none}}
 
 .top .wrap.full { width: calc(100% - 32px); }
+
+.items td.bad { color: var(--bad); }
+
+.legal .card { display: grid; gap: 14px; max-width: 46rem; }
+.legal p { color: var(--text); line-height: 1.6; }
+.ui-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.ui-switch .toggle { height: 26px; padding: 0 10px; font-size: 12px; }
+.ft-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+.ft-bottom .ft-copy { margin: 0; padding: 0; border: 0; }
+
+/* Clean style (cookie hop_ui=clean, one cookie on .hel.ink shared by every HOP app): flat surfaces, no blur, no halo,
+   solid bars. Colours, type and the 3D mark stay. */
+:root[data-ui="clean"] { --shadow: none; }
+:root[data-ui="clean"] .top { backdrop-filter: none; background: var(--bg); }
+:root[data-ui="clean"] .hero-art::before { display: none; }
+:root[data-ui="clean"] .box, :root[data-ui="clean"] .card, :root[data-ui="clean"] .tile, :root[data-ui="clean"] .qa a { box-shadow: none; }
+:root[data-ui="clean"] .sc-split .track i { background: var(--brand); }
+:root[data-ui="clean"] .scene { background: var(--panel); }
+:root[data-ui="clean"] .acct-menu, :root[data-ui="clean"] .menu-pop { box-shadow: none; }
+@media (max-width: 640px) { .ft-bottom { justify-content: center; } }

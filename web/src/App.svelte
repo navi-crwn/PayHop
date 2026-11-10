@@ -12,6 +12,7 @@
   import Split from './lib/pages/Split.svelte';
   import Dashboard from './lib/pages/Dashboard.svelte';
   import Changelog from './lib/pages/Changelog.svelte';
+  import Legal from './lib/pages/Legal.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
   const HUB = 'https://hel.ink';
@@ -33,6 +34,15 @@
       if (v === 'light' || v === 'dark') return v;
     } catch { /* ignore */ }
     return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  // optional Clean style: one cookie on .hel.ink, so the choice holds in every HOP app
+  let ui = $state<'hop' | 'clean'>(document.documentElement.dataset.ui === 'clean' ? 'clean' : 'hop');
+  function setUi(v: 'hop' | 'clean') {
+    ui = v;
+    const dom = /(^|\.)hel\.ink$/.test(location.hostname) ? '; domain=.hel.ink; Secure' : '';
+    document.cookie = 'hop_ui=' + v + '; path=/; max-age=31536000; SameSite=Lax' + dom;
+    if (v === 'clean') document.documentElement.dataset.ui = 'clean';
+    else delete document.documentElement.dataset.ui;
   }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
@@ -109,7 +119,7 @@
   const path = $derived(route.path);
   const signedIn = $derived(account.ready && account.signedIn);
   // signed in, the tools live inside the dashboard chrome; the home page and changelog stay public pages
-  const dash = $derived(signedIn && known(path) && path !== '/' && path !== '/changelog');
+  const dash = $derived(signedIn && known(path) && path !== '/' && path !== '/changelog' && path !== '/terms' && path !== '/privacy');
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
@@ -174,6 +184,8 @@
   {:else if path === '/generate'}<Generate />
   {:else if path === '/split'}<Split />
   {:else if path === '/changelog'}<Changelog />
+  {:else if path === '/terms'}<Legal kind="terms" />
+  {:else if path === '/privacy'}<Legal kind="priv" />
   {:else if path === '/account'}
     {#if signedIn}<Dashboard />{:else if account.ready}
       <div class="wrap nf"><h1>{t('top.signin')}</h1><a class="btn btn--primary" href="/auth/sso?next=%2Faccount">{t('top.signin')}</a></div>
@@ -205,8 +217,8 @@
       <nav class="links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
-          <li><a href="{HUB}/terms" rel="noopener">{t('ft.terms')}</a></li>
-          <li><a href="{HUB}/privacy" rel="noopener">{t('ft.privacy')}</a></li>
+          <li><a href="/terms">{t('ft.terms')}</a></li>
+          <li><a href="/privacy">{t('ft.privacy')}</a></li>
           <li><a href="/changelog">{t('nav.changelog')}</a></li>
         </ul>
       </nav>
@@ -226,8 +238,8 @@
         <li><a href="/changelog">{t('nav.changelog')}</a></li>
       </ul></div>
       <div><h2 class="ft-h">{t('ft.policies')}</h2><ul>
-        <li><a href="{HUB}/terms" rel="noopener">{t('ft.terms')}</a></li>
-        <li><a href="{HUB}/privacy" rel="noopener">{t('ft.privacy')}</a></li>
+        <li><a href="/terms">{t('ft.terms')}</a></li>
+        <li><a href="/privacy">{t('ft.privacy')}</a></li>
         <li><a href="{HUB}/security" rel="noopener">{t('ft.security')}</a></li>
         <li><a href={REPO} rel="noopener">{t('ft.source')}</a></li>
       </ul></div>
@@ -237,7 +249,13 @@
         {/each}
       </ul></div>
     </div>
-    <p class="ft-copy">© 2026 navi-crwn · MIT License</p>
+    <div class="ft-bottom">
+      <span class="ui-switch" role="group" aria-label={t('ui.style')}>{t('ui.style')}
+        <button type="button" class="toggle" aria-pressed={ui === 'hop'} onclick={() => setUi('hop')}>{t('ui.default')}</button>
+        <button type="button" class="toggle" id="uiClean" aria-pressed={ui === 'clean'} onclick={() => setUi('clean')}>{t('ui.clean')}</button>
+      </span>
+      <p class="ft-copy">© 2026 navi-crwn · MIT License</p>
+    </div>
   </div></footer>
 {/if}
 
