@@ -18,6 +18,7 @@
 <p align="center"><sub>Go · Svelte 5 · 9 languages · MIT</sub></p>
 
 <p align="center">
+  <a href="https://github.com/navi-crwn/PayHop/releases"><img src="https://img.shields.io/github/v/release/navi-crwn/PayHop?include_prereleases&sort=semver" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
   <a href="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml"><img src="https://github.com/navi-crwn/PayHop/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
 </p>

@@ -5,6 +5,10 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-11-11
+
+The first release: payment QR codes and split bills in the browser, accounts that can keep payment methods and bills (encrypted, only on request), part of the HOP family on hop-assets v9.
+
 ### Changed
 - hop-assets v9 replaces v8: vendored byte for byte from the hub (`public/hop-assets/v9`), `tools/hop-apps.json` is the hub manifest, the family list in the app is read from it at build time, and the local brand folder, mark, PWA icons, name font file and 3D block map are gone (mark, icons, Unbounded name subset, hero stills and the PayHop map come from v9). The README family table and `scripts/check-hop-family.sh` are the hub's.
 
@@ -14,7 +18,7 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 - `/account` lists what is saved with a delete dialog; `/generate` can use a saved method and save the current method or bill. Strings in all nine languages; privacy and terms say what is stored and carry a date.
 - `canonical` on every page, `sitemap.xml`, `robots.txt` with the sitemap and the private paths, `noindex` on `/account`.
 - README badges and WebP screenshots; `docs/DEPLOY.md` covers the key, rotation and backups.
-- First release candidate of PayHop (`pay.hel.ink`): payment QR codes for PayPal.me, Cash App, Venmo, Solana Pay, UPI and EPC SEPA, and a split-bill calculator, both running in the browser tab.
+- PayHop (`pay.hel.ink`): payment QR codes for PayPal.me, Cash App, Venmo, Solana Pay, UPI and EPC SEPA, and a split-bill calculator, both running in the browser tab.
 - The receiver name is required, shown next to the code and printed under it in the downloaded PNG; a confirmation tick is needed before download; every format is labelled "not tested in a wallet yet" (`docs/WALLET-MATRIX.md` lists the source and the status of each).
 - `web/src/lib/pay` (pure, no DOM): CRC-16, text hygiene (NFC, hidden and bidi characters, mixed alphabets), integer amounts by currency exponent, IBAN and Solana address checks, `splitBill` with exact sums; 29 tests including a QR round trip through a decoder.
 - Go server (healthz, CSP without CDN, no COOP/COEP), HOP ID sign-in, signed `/hop/*` protocol, `/api/v1/changelog`.
@@ -26,4 +30,6 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ### Not yet
 - QRIS, Pix and other bank-QR schemes; pasting someone else's QR (needs real sample codes and wallet tests).
-- hop-assets v9 (mark, name letters and 3D map as shipped assets; today they live in this repository).
+
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/navi-crwn/PayHop/releases/tag/v0.0.1

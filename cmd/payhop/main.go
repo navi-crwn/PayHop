@@ -27,7 +27,7 @@ import (
 	"github.com/navi-crwn/PayHop/web"
 )
 
-// version is set at build time: go build -ldflags "-X main.version=0.2.0".
+// version is set at build time: go build -ldflags "-X main.version=$(git describe --tags)".
 var version = "dev"
 
 func env(key, def string) string {
