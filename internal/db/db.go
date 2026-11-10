@@ -48,6 +48,22 @@ CREATE TABLE IF NOT EXISTS sessions (
   verified_at INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+CREATE TABLE IF NOT EXISTS methods (
+  id         INTEGER PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  format     TEXT NOT NULL,
+  data       BLOB NOT NULL,
+  consent_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS methods_user ON methods(user_id);
+CREATE TABLE IF NOT EXISTS bills (
+  id         INTEGER PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  data       BLOB NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS bills_user ON bills(user_id, id);
 CREATE TABLE IF NOT EXISTS events (
   id TEXT PRIMARY KEY,
   at INTEGER NOT NULL
@@ -210,6 +226,8 @@ type Stats struct {
 	Suspended int64 `json:"users_suspended"`
 	Sessions  int64 `json:"sessions_live"`
 	Active30d int64 `json:"users_active_30d"`
+	Methods   int64 `json:"methods_saved"`
+	Bills     int64 `json:"bills_saved"`
 }
 
 func (d *DB) Stats() (Stats, error) {
@@ -219,7 +237,9 @@ func (d *DB) Stats() (Stats, error) {
 		(SELECT COUNT(*) FROM users),
 		(SELECT COUNT(*) FROM users WHERE status = 'suspended'),
 		(SELECT COUNT(*) FROM sessions WHERE expires_at > ?),
-		(SELECT COUNT(*) FROM users WHERE seen_at > ?)`, now.Unix(), now.AddDate(0, 0, -30).Unix()).
-		Scan(&s.Users, &s.Suspended, &s.Sessions, &s.Active30d)
+		(SELECT COUNT(*) FROM users WHERE seen_at > ?),
+		(SELECT COUNT(*) FROM methods),
+		(SELECT COUNT(*) FROM bills)`, now.Unix(), now.AddDate(0, 0, -30).Unix()).
+		Scan(&s.Users, &s.Suspended, &s.Sessions, &s.Active30d, &s.Methods, &s.Bills)
 	return s, err
 }

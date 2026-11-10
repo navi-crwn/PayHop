@@ -16,9 +16,10 @@ import (
 // The HOP App Protocol v1 (same wire format as NoteHop and PixelHop): Imperium
 // reads health, manifest, stats and users here, and the hub pushes account
 // events. Every call is signed with this app's registry secret by one of the
-// apps in PAYHOP_HOP_CLIENTS. There is no content to moderate: a bill
-// or a QR made as a guest never reaches the server, and this stage stores no
-// bills for accounts either, so the manifest lists no content types.
+// apps in PAYHOP_HOP_CLIENTS. There is no content to moderate and none is shown
+// here: a guest never writes to the server, and what an account saves (payment
+// methods, bills) is sealed, private to that account and only ever counted
+// (stats), so the manifest lists no content types.
 
 const hopMaxBody = 1 << 20
 
@@ -90,10 +91,14 @@ func (a *App) hopHealth(w http.ResponseWriter, r *http.Request, _ []byte) {
 	}
 	checks = append(checks,
 		map[string]any{"name": "sso", "ok": true, "detail": a.cfg.SSOURL},
-		map[string]any{"name": "app", "ok": true, "detail": "browser-only generation, nothing uploaded"})
+		map[string]any{"name": "app", "ok": true, "detail": "guests: browser-only, nothing uploaded; accounts: saved items sealed, never listed here"})
+	storage := "none"
+	if a.cfg.Vault.On() {
+		storage = "encrypted"
+	}
 	hopOK(w, map[string]any{
 		"app": "payhop", "version": a.cfg.Version, "uptime_s": int64(time.Since(a.started).Seconds()),
-		"db": dbState, "storage": "none", "sso": "ok", "checks": checks,
+		"db": dbState, "storage": storage, "sso": "ok", "checks": checks,
 	})
 }
 

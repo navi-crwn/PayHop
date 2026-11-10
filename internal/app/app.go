@@ -20,6 +20,7 @@ import (
 
 	"github.com/navi-crwn/PayHop/internal/db"
 	"github.com/navi-crwn/PayHop/internal/hop"
+	"github.com/navi-crwn/PayHop/internal/vault"
 )
 
 type Config struct {
@@ -30,6 +31,7 @@ type Config struct {
 	SSOClient     string   // the slug the hub knows this app by
 	HopClients    []string // apps that may call /hop/* (imperium, helink)
 	SecureCookies bool
+	Vault         *vault.Vault // nil: saving methods and bills is off, the rest of the app works
 }
 
 func (c Config) SSOEnabled() bool { return c.SSOURL != "" && len(c.SSOSecret) >= 32 }
@@ -70,6 +72,7 @@ func (a *App) Handler() http.Handler {
 	})
 
 	a.hopRoutes(m)
+	a.accountRoutes(m)
 
 	m.HandleFunc("GET /api/v1/changelog", a.changelogJSON)
 
