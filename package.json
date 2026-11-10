@@ -8,7 +8,7 @@
     "dev": "npm run dev -w web",
     "build": "npm run build -w web",
     "check": "npm run check -w web",
-    "test": "node --test web/src/lib/ tools/",
+    "test": "node tools/run-tests.mjs",
     "lint:i18n": "node tools/check-i18n.mjs",
     "changelog": "python3 scripts/build-changelog.py --repo PayHop"
   }
