@@ -5,7 +5,8 @@
  *   HopPay.splitBill(spec)       -> per-person amounts in minor units, exact sum
  *   HopPay.crc16(text)           -> CRC-16/CCITT-FALSE (anchor: crc16("123456789") === 0x29B1)
  *
- * Formats here: paypal, cashapp, venmo, solana, upi, epc. No EMVCo (QRIS, Pix, ...) until real fixtures exist.
+ * Formats here: paypal, cashapp, venmo, solana, upi, epc, and the EMVCo pair promptpay and vietqr (tag layout from
+ * secondary sources, built from typed identifiers only). No other EMVCo scheme (QRIS, Pix, ...) until real fixtures exist.
  * Every format is untested in a real wallet: `display.tested` is always false.
  */
 
@@ -277,6 +278,110 @@ FORMATS.epc = {
   },
 };
 
+// ---------------------------------------------------------------- EMVCo merchant-presented QR (small, no scanner, no viewer)
+// A payload is a string of TLV fields: 2-digit tag, 2-digit decimal length, value. The last field is tag 63,
+// the CRC-16/CCITT-FALSE of everything before its value, as four uppercase hex digits. The tag layout used by
+// PromptPay and VietQR below comes from secondary sources (open-source libraries); see docs/WALLET-MATRIX.md.
+function tlv(tag, value) {
+  const v = String(value);
+  if (!/^\d{2}$/.test(tag)) throw new Error('tlv: bad tag');
+  if (v.length > 99) fail('too_long', 'name', 'a TLV value is at most 99 characters');
+  return tag + String(v.length).padStart(2, '0') + v;
+}
+/** Close a list of fields (strings made by tlv) with the CRC field. */
+function emvFinish(fields) {
+  const body = fields.join('') + '6304';
+  return body + crc16(body).toString(16).toUpperCase().padStart(4, '0');
+}
+/** Split a TLV string into [{ tag, value }]. Throws on a bad length, a short value or trailing bytes. */
+function parseTlv(text) {
+  const out = [];
+  let i = 0;
+  while (i < text.length) {
+    const tag = text.slice(i, i + 2), len = text.slice(i + 2, i + 4);
+    if (!/^\d{2}$/.test(tag) || !/^\d{2}$/.test(len)) throw new Error('tlv: bad header at ' + i);
+    const n = Number(len), value = text.slice(i + 4, i + 4 + n);
+    if (value.length !== n) throw new Error('tlv: value of tag ' + tag + ' is shorter than its length');
+    out.push({ tag, value });
+    i += 4 + n;
+  }
+  return out;
+}
+/** True when the payload ends in a tag 63 whose CRC matches everything before it. */
+function checkCrc(payload) {
+  const m = /^([\s\S]*6304)([0-9A-F]{4})$/.exec(String(payload));
+  return !!m && crc16(m[1]).toString(16).toUpperCase().padStart(4, '0') === m[2];
+}
+/** A payload as { tag: value }, with the two account templates (26-51) opened one level. Throws if the CRC is wrong. */
+function parseEmv(payload) {
+  if (!checkCrc(payload)) throw new Error('emv: CRC mismatch');
+  const root = {};
+  for (const { tag, value } of parseTlv(payload)) {
+    const n = Number(tag);
+    root[tag] = n >= 26 && n <= 51 ? Object.fromEntries(parseTlv(value).map((f) => [f.tag, f.value])) : value;
+  }
+  return root;
+}
+
+// ASCII only, no diacritics (Vietnamese đ included): the merchant-name field of an EMVCo code is plain ASCII.
+function asciiName(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'D').replace(/[^\x20-\x7e]/g, '').replace(/\s+/g, ' ').trim();
+}
+const emvAmount = (minor, cur) => formatMinor(minor, cur);
+
+// PromptPay (Thailand), mobile number. Tags from thai-qr-payment.js.org/reference/spec (secondary source).
+FORMATS.promptpay = {
+  group: 2, confidence: 'medium-low', country: 'TH', currencies: ['THB'],
+  build(p, w) {
+    const name = needName(cleanText(p.name, 'name', w, 99), 'name');
+    let digits = String(p.phone || '').replace(/[\s().-]/g, '');
+    if (digits.startsWith('+66')) digits = digits.slice(3);
+    else if (digits.startsWith('0066')) digits = digits.slice(4);
+    else if (digits.startsWith('66') && digits.length === 11) digits = digits.slice(2);
+    else if (digits.startsWith('0')) digits = digits.slice(1);
+    if (!/^[689]\d{8}$/.test(digits)) fail('bad_handle', 'phone', 'a Thai mobile number has 10 digits, 06, 08 or 09 first');
+    const minor = parseAmount(p.amount, 'THB', w);
+    const amount = minor ? emvAmount(minor, 'THB') : null;
+    const fields = [tlv('00', '01'), tlv('01', amount ? '12' : '11'),
+      tlv('29', tlv('00', 'A000000677010111') + tlv('01', '0066' + digits)), tlv('53', '764')];
+    if (amount) fields.push(tlv('54', amount));
+    fields.push(tlv('58', 'TH'));
+    w.push('name_not_in_code'); // the code holds only the number: the wallet shows the name the bank has on file
+    if (mixedScripts(name)) w.push('mixed_scripts');
+    return {
+      payload: emvFinish(fields),
+      display: display('PromptPay', { receiverName: name, receiverNameKind: 'legal', receiverId: '0' + digits.slice(0, 2) + '…' + digits.slice(-3), amount, currency: 'THB', country: 'TH' }),
+    };
+  },
+};
+
+// VietQR (Vietnam), to a bank account (service QRIBFTTA). Tags from open-source libraries (secondary source).
+FORMATS.vietqr = {
+  group: 2, confidence: 'medium-low', country: 'VN', currencies: ['VND'],
+  build(p, w) {
+    const name = needName(cleanText(p.name, 'name', w, 99), 'name');
+    const bin = String(p.bin || '').trim();
+    if (!/^\d{6}$/.test(bin)) fail('bad_bin', 'bin', 'a bank BIN has 6 digits');
+    const account = String(p.account || '').replace(/[\s-]/g, '');
+    if (!/^\d{1,19}$/.test(account)) fail('bad_account', 'account', 'an account number is 1 to 19 digits');
+    const ascii = asciiName(name);
+    if (!ascii) fail('bad_name', 'name');
+    if (ascii.length > 25) fail('too_long', 'name', 'the name in the code is at most 25 characters');
+    if (ascii !== name) w.push('name_ascii');
+    const minor = parseAmount(p.amount, 'VND', w);
+    const amount = minor ? emvAmount(minor, 'VND') : null;
+    const fields = [tlv('00', '01'), tlv('01', amount ? '12' : '11'),
+      tlv('38', tlv('00', 'A000000727') + tlv('01', tlv('00', bin) + tlv('01', account)) + tlv('02', 'QRIBFTTA')), tlv('53', '704')];
+    if (amount) fields.push(tlv('54', amount));
+    fields.push(tlv('58', 'VN'), tlv('59', ascii));
+    if (mixedScripts(name)) w.push('mixed_scripts');
+    return {
+      payload: emvFinish(fields),
+      display: display('VietQR', { receiverName: name, receiverNameKind: 'legal', receiverId: bin + ' ' + mask(account), amount, currency: 'VND', country: 'VN' }),
+    };
+  },
+};
+
 /** Build a payload. Throws HopPayError. The result's display.receiverName is never empty. */
 function build(format, params) {
   const f = FORMATS[format];
@@ -384,6 +489,6 @@ function splitBill(spec) {
 }
 
 export {
-  HopPayError, build, splitBill, allocate, crc16, parseAmount, formatMinor, exponent, ibanValid, base58Length, cleanText, mixedScripts,
+  HopPayError, build, splitBill, allocate, crc16, tlv, emvFinish, parseTlv, parseEmv, checkCrc, parseAmount, formatMinor, exponent, ibanValid, base58Length, cleanText, mixedScripts,
 };
 export const formats = Object.fromEntries(Object.entries(FORMATS).map(([k, v]) => [k, { group: v.group, confidence: v.confidence, country: v.country, currencies: v.currencies }]));

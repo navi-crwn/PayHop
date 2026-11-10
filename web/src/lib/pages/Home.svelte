@@ -13,9 +13,11 @@
     ['Venmo', 'us', 'venmo'],
     ['Solana Pay', 'world', 'solana'],
     ['UPI', 'in', 'upi'],
-    ['EPC SEPA', 'eu', 'epc']
+    ['EPC SEPA', 'eu', 'epc'],
+    ['PromptPay', 'th', 'promptpay'],
+    ['VietQR', 'vn', 'vietqr']
   ];
-  const LATER = ['QRIS', 'Pix', 'PromptPay', 'PayNow', 'VietQR'];
+  const LATER = ['QRIS', 'Pix', 'PayNow'];
   const TILES = FAMILY.filter((f) => f.slug !== 'hub');
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 

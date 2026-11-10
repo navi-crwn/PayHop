@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>Payment QR codes and split bills, made on your device.</b><br>PayHop builds payment QR codes for PayPal.me, Cash App, Venmo, Solana Pay, UPI and EPC SEPA, and splits a bill between people, all in your browser. Nothing is uploaded.</p>
+<p align="center"><b>Payment QR codes and split bills, made on your device.</b><br>PayHop builds payment QR codes for PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay and VietQR, and splits a bill between people, all in your browser. Nothing is uploaded.</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>Try it online</b></a> ·
@@ -27,7 +27,7 @@
 
 ## What it does
 
-- Make a payment QR for six formats. The receiver name is required, is shown next to the code and is printed under it in the PNG; you tick a confirmation before you can download.
+- Make a payment QR for eight formats. The receiver name is required, is shown next to the code and is printed under it in the PNG; you tick a confirmation before you can download.
 - Split a bill: people, items, who shared each one, tax and tip spread by what each person ordered, rounding taken by the person who paid. Amounts are exact integers, so the shares always add up to the total.
 - Works offline once loaded, in nine languages, light and dark, with a static page for reduced motion.
 - Signing in with a HOP ID lets you save payment methods (up to 20) and your last 200 bills, one at a time and only after you tick a consent box. They are encrypted on the server (AES-256-GCM), private to your account and can be deleted at any time; guests never write anything to the server. Saving stays off until the server has a key (`PAYHOP_PROFILE_KEY`, see [docs/DEPLOY.md](docs/DEPLOY.md)).

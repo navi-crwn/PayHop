@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>QR codes de pagamento e divisão de contas, feitos no seu dispositivo.</b><br>O PayHop cria QR codes de pagamento para PayPal.me, Cash App, Venmo, Solana Pay, UPI e EPC SEPA e divide uma conta entre pessoas, tudo no seu navegador. Nada é enviado.</p>
+<p align="center"><b>QR codes de pagamento e divisão de contas, feitos no seu dispositivo.</b><br>O PayHop cria QR codes de pagamento para PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay e VietQR e divide uma conta entre pessoas, tudo no seu navegador. Nada é enviado.</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>Experimente online</b></a> ·
@@ -27,7 +27,7 @@
 
 ## O que faz
 
-- Cria QR de pagamento em seis formatos. O nome do destinatário é obrigatório, aparece ao lado do código e é impresso sob ele no PNG; você marca uma confirmação antes de baixar.
+- Cria QR de pagamento em oito formatos. O nome do destinatário é obrigatório, aparece ao lado do código e é impresso sob ele no PNG; você marca uma confirmação antes de baixar.
 - Divide uma conta: pessoas, itens, quem dividiu cada um, imposto e gorjeta pelo que cada um pediu, arredondamento absorvido por quem pagou. Valores são inteiros exatos, então as partes sempre somam o total.
 - Funciona offline depois de carregar, em nove idiomas, claro e escuro, com página estática para movimento reduzido.
 - Com um HOP ID você pode salvar métodos de pagamento (até 20) e suas últimas 200 cobranças, um item por vez e só depois de marcar uma caixa de consentimento. Eles são criptografados no servidor (AES-256-GCM), privados para a sua conta e podem ser excluídos a qualquer momento; visitantes nunca gravam nada no servidor. O salvamento fica desligado até o servidor ter uma chave (`PAYHOP_PROFILE_KEY`, veja [docs/DEPLOY.md](docs/DEPLOY.md)).

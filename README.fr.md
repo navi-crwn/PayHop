@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>QR de paiement et partage d’addition, faits sur votre appareil.</b><br>PayHop crée des QR de paiement pour PayPal.me, Cash App, Venmo, Solana Pay, UPI et EPC SEPA et partage une addition entre plusieurs personnes, le tout dans votre navigateur. Rien n’est envoyé.</p>
+<p align="center"><b>QR de paiement et partage d’addition, faits sur votre appareil.</b><br>PayHop crée des QR de paiement pour PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay et VietQR et partage une addition entre plusieurs personnes, le tout dans votre navigateur. Rien n’est envoyé.</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>Essayer en ligne</b></a> ·
@@ -27,7 +27,7 @@
 
 ## Ce que ça fait
 
-- Crée des QR de paiement pour six formats. Le nom du bénéficiaire est obligatoire, affiché à côté du code et imprimé dessous dans le PNG ; vous cochez une confirmation avant de télécharger.
+- Crée des QR de paiement pour huit formats. Le nom du bénéficiaire est obligatoire, affiché à côté du code et imprimé dessous dans le PNG ; vous cochez une confirmation avant de télécharger.
 - Partage une addition : personnes, articles, qui partage chacun, taxes et pourboire selon la commande, l’arrondi est absorbé par celui qui a payé. Les montants sont des entiers exacts, donc les parts font toujours le total.
 - Fonctionne hors ligne une fois chargé, en neuf langues, clair et sombre, avec une page statique pour le mouvement réduit.
 - Avec un HOP ID, vous pouvez enregistrer des moyens de paiement (jusqu’à 20) et vos 200 dernières factures, un élément à la fois et seulement après avoir coché une case de consentement. Ils sont chiffrés sur le serveur (AES-256-GCM), privés pour votre compte et supprimables à tout moment ; les invités n’écrivent jamais rien sur le serveur. L’enregistrement reste désactivé tant que le serveur n’a pas de clé (`PAYHOP_PROFILE_KEY`, voir [docs/DEPLOY.md](docs/DEPLOY.md)).

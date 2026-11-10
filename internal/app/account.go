@@ -31,7 +31,7 @@ const (
 	maxNote       = 200
 )
 
-var payFormats = map[string]bool{"paypal": true, "cashapp": true, "venmo": true, "solana": true, "upi": true, "epc": true}
+var payFormats = map[string]bool{"paypal": true, "cashapp": true, "venmo": true, "solana": true, "upi": true, "epc": true, "promptpay": true, "vietqr": true}
 
 type methodPlain struct {
 	Label  string            `json:"label"`

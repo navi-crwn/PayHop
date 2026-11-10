@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>Zahlungs-QR-Codes und geteilte Rechnungen, direkt auf deinem Gerät.</b><br>PayHop erstellt im Browser Zahlungs-QR-Codes für PayPal.me, Cash App, Venmo, Solana Pay, UPI und EPC SEPA und teilt eine Rechnung unter mehreren Personen auf. Es wird nichts hochgeladen.</p>
+<p align="center"><b>Zahlungs-QR-Codes und geteilte Rechnungen, direkt auf deinem Gerät.</b><br>PayHop erstellt im Browser Zahlungs-QR-Codes für PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay und VietQR und teilt eine Rechnung unter mehreren Personen auf. Es wird nichts hochgeladen.</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>Online ausprobieren</b></a> ·
@@ -27,7 +27,7 @@
 
 ## Was es kann
 
-- Zahlungs-QR für sechs Formate. Der Name des Empfängers ist Pflicht, steht neben dem Code und wird unter ihn ins PNG gedruckt; vor dem Download setzt du einen Bestätigungshaken.
+- Zahlungs-QR für acht Formate. Der Name des Empfängers ist Pflicht, steht neben dem Code und wird unter ihn ins PNG gedruckt; vor dem Download setzt du einen Bestätigungshaken.
 - Rechnung teilen: Personen, Positionen, wer sie teilt, Steuer und Trinkgeld nach Bestellwert, Rundung trägt, wer bezahlt hat. Beträge sind exakte ganze Zahlen, die Anteile ergeben immer die Summe.
 - Funktioniert nach dem Laden offline, in neun Sprachen, hell und dunkel, mit statischer Seite bei reduzierter Bewegung.
 - Mit einer HOP-ID kannst du Zahlungsmethoden (bis zu 20) und deine letzten 200 Rechnungen speichern, einzeln und erst nach dem Ankreuzen eines Einwilligungskästchens. Sie sind auf dem Server verschlüsselt (AES-256-GCM), nur für dein Konto sichtbar und jederzeit löschbar; Gäste schreiben nie etwas auf den Server. Das Speichern bleibt aus, bis der Server einen Schlüssel hat (`PAYHOP_PROFILE_KEY`, siehe [docs/DEPLOY.md](docs/DEPLOY.md)).

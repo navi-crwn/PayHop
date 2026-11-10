@@ -7,7 +7,7 @@ export const KEEP_BILLS = 200;
 
 /** The brand names are not translated, so they live here. */
 export const FORMAT_NAMES = {
-  paypal: 'PayPal.me', cashapp: 'Cash App', venmo: 'Venmo', solana: 'Solana Pay', upi: 'UPI', epc: 'EPC SEPA'
+  paypal: 'PayPal.me', cashapp: 'Cash App', venmo: 'Venmo', solana: 'Solana Pay', upi: 'UPI', epc: 'EPC SEPA', promptpay: 'PromptPay', vietqr: 'VietQR'
 };
 
 /** The receiver details a method keeps. The amount, note and reference belong to one bill, not to the method. */
@@ -17,11 +17,13 @@ export const METHOD_KEYS = {
   venmo: ['user'],
   solana: ['recipient', 'splToken', 'label'],
   upi: ['vpa', 'name'],
-  epc: ['name', 'iban', 'bic']
+  epc: ['name', 'iban', 'bic'],
+  promptpay: ['name', 'phone'],
+  vietqr: ['name', 'bin', 'account']
 };
 
 /** The field that identifies the receiver of each format. */
-export const ID_KEY = { paypal: 'user', cashapp: 'cashtag', venmo: 'user', solana: 'recipient', upi: 'vpa', epc: 'iban' };
+export const ID_KEY = { paypal: 'user', cashapp: 'cashtag', venmo: 'user', solana: 'recipient', upi: 'vpa', epc: 'iban', promptpay: 'phone', vietqr: 'account' };
 
 /** "DE89 3704 0044 0532 0130 00" -> "DE••••000": enough to recognise it, not enough to copy it from the screen. */
 export function maskId(value) {

@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>QR pembayaran dan patungan tagihan, dibuat di perangkatmu.</b><br>PayHop membuat QR pembayaran untuk PayPal.me, Cash App, Venmo, Solana Pay, UPI, dan EPC SEPA, serta membagi tagihan antar orang, semuanya di browsermu. Tidak ada yang diunggah.</p>
+<p align="center"><b>QR pembayaran dan patungan tagihan, dibuat di perangkatmu.</b><br>PayHop membuat QR pembayaran untuk PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay, dan VietQR, serta membagi tagihan antar orang, semuanya di browsermu. Tidak ada yang diunggah.</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>Coba online</b></a> ·
@@ -27,7 +27,7 @@
 
 ## Fungsinya
 
-- Buat QR pembayaran untuk enam format. Nama penerima wajib, tampil di samping kode dan dicetak di bawahnya pada PNG; kamu mencentang konfirmasi sebelum bisa mengunduh.
+- Buat QR pembayaran untuk delapan format. Nama penerima wajib, tampil di samping kode dan dicetak di bawahnya pada PNG; kamu mencentang konfirmasi sebelum bisa mengunduh.
 - Bagi tagihan: orang, item, siapa yang berbagi, pajak dan tip dibagi menurut pesanan, pembulatan ditanggung yang membayar. Jumlah berupa bilangan bulat pasti, sehingga bagian selalu menjumlah ke total.
 - Bekerja offline setelah dimuat, dalam sembilan bahasa, terang dan gelap, dengan halaman statis untuk gerak berkurang.
 - Dengan HOP ID Anda bisa menyimpan metode pembayaran (maksimal 20) dan 200 tagihan terakhir, satu per satu dan hanya setelah mencentang kotak persetujuan. Semuanya dienkripsi di server (AES-256-GCM), hanya untuk akun Anda, dan bisa dihapus kapan saja; tamu tidak pernah menulis apa pun ke server. Penyimpanan tetap mati sampai server punya kunci (`PAYHOP_PROFILE_KEY`, lihat [docs/DEPLOY.md](docs/DEPLOY.md)).

@@ -4,7 +4,7 @@
 
 <h1 align="center">PayHop</h1>
 
-<p align="center"><b>在你的设备上生成收款二维码并分摊账单。</b><br>PayHop 在浏览器中为 PayPal.me、Cash App、Venmo、Solana Pay、UPI 和 EPC SEPA 生成收款二维码，并在多人之间分摊账单。不会上传任何内容。</p>
+<p align="center"><b>在你的设备上生成收款二维码并分摊账单。</b><br>PayHop 在浏览器中为 PayPal.me、Cash App、Venmo、Solana Pay、UPI、EPC SEPA、PromptPay 和 VietQR 生成收款二维码，并在多人之间分摊账单。不会上传任何内容。</p>
 
 <p align="center">
   <a href="https://pay.hel.ink"><b>在线试用</b></a> ·
@@ -27,7 +27,7 @@
 
 ## 功能
 
-- 为六种格式生成收款二维码。收款人姓名必填，显示在二维码旁并印在 PNG 下方；下载前需勾选确认。
+- 为八种格式生成收款二维码。收款人姓名必填，显示在二维码旁并印在 PNG 下方；下载前需勾选确认。
 - 分摊账单：人员、项目、各项目由谁分摊，税费和小费按每人点的金额比例分配，舍入差额由付款人承担。金额使用精确整数，各人份额之和始终等于总额。
 - 页面加载后可离线使用，支持九种语言、浅色和深色，并为减少动态效果提供静态页面。
 - 用 HOP ID 登录后可以保存付款方式（最多 20 个）和最近 200 张账单，逐项保存，并且只有在勾选同意框之后才会保存。它们在服务器上加密（AES-256-GCM），仅属于你的账户，可随时删除；访客不会向服务器写入任何内容。服务器没有设置密钥（`PAYHOP_PROFILE_KEY`，见 [docs/DEPLOY.md](docs/DEPLOY.md)）时，保存功能保持关闭。
