@@ -1,0 +1,15 @@
+{
+  "name": "payhop-root",
+  "private": true,
+  "type": "module",
+  "description": "PayHop: the Go server at the root, the browser app in web/.",
+  "workspaces": ["web"],
+  "scripts": {
+    "dev": "npm run dev -w web",
+    "build": "npm run build -w web",
+    "check": "npm run check -w web",
+    "test": "node --test web/src/lib/ tools/",
+    "lint:i18n": "node tools/check-i18n.mjs",
+    "changelog": "python3 scripts/build-changelog.py --repo PayHop"
+  }
+}
