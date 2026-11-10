@@ -3,7 +3,7 @@
   import { i18n } from '../i18n/index.svelte';
   import { account } from '../account.svelte';
   import { BRAND } from '../brand';
-  import { FAMILY, familyHref } from '../family';
+  import { FAMILY, familyHref, tileSrc } from '../family';
   import Icon from '../Icon.svelte';
 
   const t = (k: string) => i18n.t(k);
@@ -53,8 +53,7 @@
           const H = (window as any).HopHero3D;
           if (cancelled || !H || !canvas) return;
           try {
-            H.maps[BRAND.slug] = BRAND.map;
-            H.mount(canvas, { preset: BRAND.slug, interactive: true, colors: BRAND.stops });
+            H.mount(canvas, { preset: BRAND.slug, interactive: true }); // the block map and colours are in the v9 engine
             live = true;
           } catch {
             /* the still image stays */
@@ -82,7 +81,7 @@
     <p class="proof"><Icon name="shield" />{t('hero.proof')}</p>
   </div>
   <figure class="hero-art" aria-hidden="true" style="margin:0">
-    <img class="still" src="/home/payhop.png" alt="" width="380" height="380">
+    <img class="still lt" src={BRAND.still.light} alt="" width="380" height="380"><img class="still dk" src={BRAND.still.dark} alt="" width="380" height="380">
     <canvas bind:this={canvas} class:on={live}></canvas>
   </figure>
 </div></section>
@@ -131,8 +130,8 @@
   <div class="fam">
     {#each TILES as f}
       <a class="tile" href={familyHref(f, account.signedIn, account.hubUrl)} rel="noopener">
-        <img class="lt" src="/hop-assets/v8/home/{f.tile}-light.webp" alt="" width="168" height="168" loading="lazy">
-        <img class="dk" src="/hop-assets/v8/home/{f.tile}-dark.webp" alt="" width="168" height="168" loading="lazy">
+        <img class="lt" src={tileSrc(f, 'light')} alt="" width="168" height="168" loading="lazy">
+        <img class="dk" src={tileSrc(f, 'dark')} alt="" width="168" height="168" loading="lazy">
         <span class="nm">{f.name}</span><span class="host">{f.host}</span>
       </a>
     {/each}

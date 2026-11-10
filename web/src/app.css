@@ -7,7 +7,7 @@
   --hop-ctl-radius: 8px; --hop-ctl-h: 36px; --hop-ctl-h-sm: 32px; --hop-ctl-h-lg: 40px; --hop-ring: 3px;
   --card-radius: 14px; --field-max: 28rem; --field-narrow: 24rem; --field-short: 11rem; --field-xs: 6rem;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; --serif: 'Instrument Serif', Georgia, serif; --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-  --name-font: 'Unbounded', var(--sans);
+  --name-font: 'HOP Unbounded', var(--sans); /* hop-assets v9 hop-brand.css */
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -404,3 +404,8 @@ dialog.confirm .actions { justify-content: flex-end; }
 :root[data-ui="clean"] .scene { background: var(--panel); }
 :root[data-ui="clean"] .acct-menu, :root[data-ui="clean"] .menu-pop { box-shadow: none; }
 @media (max-width: 640px) { .ft-bottom { justify-content: center; } }
+
+/* the hero still: the light picture, or the dark one when the page is dark (hop-assets v9 ships both) */
+.hero-art .dk { display: none; }
+:root[data-theme="dark"] .hero-art .lt { display: none; }
+:root[data-theme="dark"] .hero-art .dk { display: block; }

@@ -31,7 +31,7 @@ func newTestApp(t *testing.T, sso bool) (*App, *httptest.Server) {
 	files := fstest.MapFS{
 		"index.html":                  {Data: []byte("<!doctype html><title>PayHop</title>")},
 		"assets/app-abc123.js":        {Data: []byte("console.log(1)")},
-		"hop-assets/v8/hop-hero3d.js": {Data: []byte("window.HopHero3D={}")},
+		"hop-assets/v9/hop-hero3d.js": {Data: []byte("window.HopHero3D={}")},
 		"fonts/a.woff2":               {Data: []byte("x")},
 		"sw.js":                       {Data: []byte("self.skip=1")},
 		"changelog.json":              {Data: []byte("{}")},
@@ -100,7 +100,7 @@ func TestStaticHeadersAndRoutes(t *testing.T) {
 		{"/split", "no-cache", 200},
 		{"/sw.js", "no-cache", 200},
 		{"/assets/app-abc123.js", "public, max-age=31536000, immutable", 200},
-		{"/hop-assets/v8/hop-hero3d.js", "public, max-age=31536000, immutable", 200},
+		{"/hop-assets/v9/hop-hero3d.js", "public, max-age=31536000, immutable", 200},
 		{"/fonts/a.woff2", "public, max-age=31536000, immutable", 200},
 		{"/missing.js", "", 404},
 	} {

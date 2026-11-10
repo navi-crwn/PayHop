@@ -5,6 +5,9 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+### Changed
+- hop-assets v9 replaces v8: vendored byte for byte from the hub (`public/hop-assets/v9`), `tools/hop-apps.json` is the hub manifest, the family list in the app is read from it at build time, and the local brand folder, mark, PWA icons, name font file and 3D block map are gone (mark, icons, Unbounded name subset, hero stills and the PayHop map come from v9). The README family table and `scripts/check-hop-family.sh` are the hub's.
+
 ### Added
 - PromptPay (Thailand, mobile number, optional amount) and VietQR (Vietnam, bank BIN + account, optional amount) in the generator, built from typed identifiers with a small EMVCo module in `hop-pay` (TLV writer, CRC-16/CCITT-FALSE, TLV reader and CRC check for read-back tests). Tag layout is from secondary sources and marked unverified in `docs/WALLET-MATRIX.md`; no official example payload is stored; both are labelled "not tested in a wallet yet". No scanner, no QR pasting, no other EMVCo scheme.
 - Saved payment methods (up to 20, one row each) and bill history (the last 200) for signed-in accounts, sealed with AES-256-GCM under `PAYHOP_PROFILE_KEY` (random nonce per row; `PAYHOP_PROFILE_KEY_PREV` and `payhop reencrypt` for rotation). Explicit, unticked-by-default consent for every method and bill, delete one or everything at any time, `account.deleted` from the hub removes it all. Without a key saving is off and the rest of the app works. Nothing saved is written to logs or shown through `/hop/*` (the manifest lists no content types; stats only count rows).
