@@ -1,5 +1,0 @@
-/* The name of PayHop as real text next to its mark. Unbounded (SIL OFL 1.1, brand/LICENSE-unbounded.txt),
-   Latin subset file. The name is never translated. Part of the identity that can still change before hop-assets v9
-   (see src/lib/brand.ts). */
-@font-face { font-family: 'Unbounded'; src: url(/brand/unbounded-latin-wght-normal.woff2) format('woff2'); font-weight: 200 900; font-display: swap; }
-.hop-name-payhop { font-family: 'Unbounded', system-ui, sans-serif; font-weight: 700; font-synthesis: none; letter-spacing: -.01em; white-space: nowrap; }

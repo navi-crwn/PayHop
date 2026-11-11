@@ -1,4 +1,5 @@
 import qrcode from 'qrcode-generator';
+import { clipToFit } from './text.js';
 
 export interface Qr {
   n: number;
@@ -59,9 +60,7 @@ export function qrPng(text: string, t: PngText): Promise<Blob> {
   g.textAlign = 'center';
   g.fillStyle = '#12141a';
   g.font = '700 24px Inter, system-ui, sans-serif';
-  let name = t.name;
-  while (g.measureText(name).width > W - 32 && name.length > 4) name = name.slice(0, -2);
-  if (name !== t.name) name += '…';
+  const name = clipToFit(t.name, (s: string) => g.measureText(s).width <= W - 32);
   g.fillText(name, W / 2, side + 26);
   g.fillStyle = '#566074';
   g.font = '500 17px Inter, system-ui, sans-serif';

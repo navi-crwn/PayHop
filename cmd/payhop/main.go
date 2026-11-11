@@ -2,6 +2,9 @@
 // from web/dist with its CSP, signs people in with HOP ID and answers the
 // family's signed /hop/* protocol. It never handles money. Settings come from the environment
 // (deploy/payhop.env.example); flags override the two that matter locally.
+//
+//	payhop              run the server
+//	payhop reencrypt    after a key rotation, rewrite saved data under PAYHOP_PROFILE_KEY
 package main
 
 import (
@@ -20,10 +23,11 @@ import (
 
 	"github.com/navi-crwn/PayHop/internal/app"
 	"github.com/navi-crwn/PayHop/internal/db"
+	"github.com/navi-crwn/PayHop/internal/vault"
 	"github.com/navi-crwn/PayHop/web"
 )
 
-// version is set at build time: go build -ldflags "-X main.version=0.2.0".
+// version is set at build time: go build -ldflags "-X main.version=$(git describe --tags)".
 var version = "dev"
 
 func env(key, def string) string {
@@ -54,6 +58,16 @@ func main() {
 		return
 	}
 
+	vlt, err := vault.New(os.Getenv("PAYHOP_PROFILE_KEY"), os.Getenv("PAYHOP_PROFILE_KEY_PREV"))
+	if err != nil {
+		log.Fatalf("saved methods: %v", err)
+	}
+
+	if flag.Arg(0) == "reencrypt" {
+		reencrypt(*dbPath, vlt)
+		return
+	}
+
 	base := strings.TrimRight(env("PAYHOP_BASE_URL", "http://localhost:8105"), "/")
 	secure := strings.HasPrefix(base, "https://")
 	if v := os.Getenv("PAYHOP_SECURE_COOKIES"); v != "" {
@@ -67,9 +81,14 @@ func main() {
 		SSOClient:     env("PAYHOP_SSO_CLIENT", "payhop"),
 		HopClients:    list("PAYHOP_HOP_CLIENTS", "imperium,helink"),
 		SecureCookies: secure,
+		Vault:         vlt,
 	}
 	if cfg.SSOURL != "" && !cfg.SSOEnabled() {
 		log.Fatal("PAYHOP_SSO_URL is set but PAYHOP_SSO_SECRET is shorter than 32 characters")
+	}
+
+	if !vlt.On() {
+		log.Print("PAYHOP_PROFILE_KEY is not set: saving payment methods and bills is off (guests and the rest of the app are not affected)")
 	}
 
 	d, err := db.Open(*dbPath)
@@ -127,4 +146,23 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
+}
+
+// reencrypt is the second step of a key rotation: with the new key in
+// PAYHOP_PROFILE_KEY and the old one in PAYHOP_PROFILE_KEY_PREV, every saved
+// row is opened and sealed again under the new key, in one transaction.
+func reencrypt(dbPath string, v *vault.Vault) {
+	if !v.On() {
+		log.Fatal("reencrypt needs PAYHOP_PROFILE_KEY (and PAYHOP_PROFILE_KEY_PREV for the old key)")
+	}
+	d, err := db.Open(dbPath)
+	if err != nil {
+		log.Fatalf("db: %v", err)
+	}
+	defer d.Close()
+	rewritten, current, err := app.Reencrypt(d, v)
+	if err != nil {
+		log.Fatalf("reencrypt: nothing was changed: %v", err)
+	}
+	fmt.Printf("reencrypted %d rows, %d were already under the current key\n", rewritten, current)
 }

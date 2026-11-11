@@ -4,6 +4,9 @@
   import { build, HopPayError } from '../pay';
   import { FORMAT_DEFS, FORMAT_BY_ID, emptyValues } from '../formats';
   import { makeQr, qrPng } from '../qr';
+  import { account } from '../account.svelte';
+  import { saved, loadSaved, saveMethod, saveBill } from '../saved.svelte';
+  import { methodBody, methodTitle, applyMethod, billBody, errorKey } from '../saved-model.js';
   import Icon from '../Icon.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
@@ -14,6 +17,17 @@
   let touched = $state<Record<string, boolean>>({});
   let confirmed = $state(false);
   let copied = $state(false);
+
+  // saving: only for a signed-in account, one item at a time, after its own ticked box
+  let consentMethod = $state(false);
+  let consentBill = $state(false);
+  let saveLabel = $state('');
+  let saveMsg = $state<{ ok: boolean; text: string } | null>(null);
+  let saving = $state(false);
+  const canSave = $derived(account.ready && account.signedIn);
+  $effect(() => {
+    if (canSave && !saved.loaded) void loadSaved();
+  });
 
   const def = $derived(FORMAT_BY_ID[fmt]);
 
@@ -58,6 +72,33 @@
 
   function slug(s: string): string {
     return s.normalize('NFKD').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 32) || 'code';
+  }
+
+  function pickSaved(e: Event) {
+    const id = Number((e.currentTarget as HTMLSelectElement).value);
+    const m = saved.methods.find((x) => x.id === id);
+    if (!m || !vals[m.format]) return;
+    fmt = m.format;
+    vals[m.format] = applyMethod(vals[m.format], m);
+    touched = {};
+    (e.currentTarget as HTMLSelectElement).value = '';
+  }
+
+  async function keep(kind: 'method' | 'bill') {
+    if (!result.ok || saving) return;
+    saving = true;
+    saveMsg = null;
+    const r =
+      kind === 'method'
+        ? await saveMethod(methodBody(fmt, vals[fmt], saveLabel, consentMethod))
+        : await saveBill(billBody(fmt, result.out.display, result.out.payload, consentBill));
+    saving = false;
+    if (r.ok) {
+      saveMsg = { ok: true, text: t('gen.saved_ok') };
+      if (kind === 'method') { consentMethod = false; saveLabel = ''; } else consentBill = false;
+    } else {
+      saveMsg = { ok: false, text: t(errorKey(r.code), { n: saved.maxMethods }) };
+    }
   }
 
   async function download() {
@@ -127,8 +168,35 @@
       </div>
       <div class="card" id="saveCard">
         <h2>{t('gen.save_title')}</h2>
-        <label class="check"><input type="checkbox" disabled><span>{t('gen.save_consent')}</span></label>
-        <div class="actions"><button class="btn btn--outline" disabled>{t('gen.save_btn')}</button><span class="hint" style="margin:0;align-self:center">{t('gen.save_hint')}</span></div>
+        {#if canSave && saved.loaded && saved.enabled}
+          {#if saved.methods.length}
+            <div class="field field--narrow" style="margin-bottom:14px">
+              <label class="lbl" for="useSaved">{t('gen.use_saved')}</label>
+              <select class="select" id="useSaved" onchange={pickSaved}>
+                <option value="">{t('gen.use_saved_pick')}</option>
+                {#each saved.methods as m (m.id)}<option value={m.id}>{methodTitle(m)}</option>{/each}
+              </select>
+            </div>
+          {/if}
+          <div class="field field--narrow" style="margin-bottom:12px">
+            <label class="lbl" for="saveLabel">{t('gen.save_label')}</label>
+            <input class="input" id="saveLabel" maxlength="60" bind:value={saveLabel} autocomplete="off">
+          </div>
+          <label class="check"><input type="checkbox" id="consentMethod" bind:checked={consentMethod}><span>{t('gen.save_consent')}</span></label>
+          <div class="actions"><button class="btn btn--outline" id="saveMethod" disabled={!result.ok || !consentMethod || saving} onclick={() => keep('method')}>{t('gen.save_btn')}</button></div>
+          <hr class="sep">
+          <label class="check"><input type="checkbox" id="consentBill" bind:checked={consentBill}><span>{t('gen.hist_consent')}</span></label>
+          <div class="actions"><button class="btn btn--outline" id="saveBill" disabled={!result.ok || !consentBill || saving} onclick={() => keep('bill')}>{t('gen.hist_btn')}</button></div>
+          {#if saveMsg}<p class={saveMsg.ok ? 'hint' : 'err'} role="status" id="saveMsg">{saveMsg.text}</p>{/if}
+          <p class="hint">{t('saved.encrypted')}</p>
+        {:else if canSave && saved.loaded}
+          <p class="hint" style="margin:0">{t('saved.off')}</p>
+        {:else if canSave}
+          <p class="hint" style="margin:0">…</p>
+        {:else}
+          <p class="hint" style="margin:0 0 12px">{t('gen.save_hint')}</p>
+          {#if account.ready && account.sso}<a class="btn btn--outline" id="saveSignin" href={'/auth/sso?next=' + encodeURIComponent('/generate')}>{t('top.signin')}</a>{/if}
+        {/if}
       </div>
     </div>
 

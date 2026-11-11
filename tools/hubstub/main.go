@@ -5,7 +5,7 @@
 // wire formats:
 //
 //	GET  /sso/payhop?state&return_to  sign-in page; POST issues a ticket
-//	GET  /logout                       chained logout through PayHop's /auth/sso/logout
+//	GET  /logout[?return=<app>/]       chained logout through PayHop's /auth/sso/logout, then back to return
 //	POST /push?type=...&sub=...         a signed account event to PayHop /hop/events (as "helink")
 //	GET  /imperium/{path...}            a signed GET to PayHop /hop/{path} (as "imperium")
 //
@@ -129,7 +129,12 @@ func main() {
 	})
 	// The real hub ends its own session, then walks every app's logout path in turn.
 	m.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, app+"/auth/sso/logout?next="+url.QueryEscape(self+"/?out=signed+out+everywhere"), http.StatusFound)
+		next := self + "/?out=signed+out+everywhere"
+		// ?return= is where the person ends up: the real hub honours it for a trusted host (hop-auth trusted_hosts)
+		if ret := r.URL.Query().Get("return"); strings.HasPrefix(ret, app+"/") {
+			next = ret
+		}
+		http.Redirect(w, r, app+"/auth/sso/logout?next="+url.QueryEscape(next), http.StatusFound)
 	})
 	m.HandleFunc("POST /push", func(w http.ResponseWriter, r *http.Request) {
 		counter++

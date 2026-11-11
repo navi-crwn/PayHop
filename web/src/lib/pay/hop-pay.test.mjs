@@ -132,6 +132,8 @@ test('T12 every format returns a complete display and tested=false', () => {
     solana: { recipient: sys, amount: '1', label: 'Ana' },
     upi: { vpa: 'ana@okbank', name: 'Ana', amount: '5' },
     epc: { name: 'Ana', iban: 'DE89370400440532013000', amount: '5' },
+    promptpay: { name: 'Ana', phone: '0812345678', amount: '5' },
+    vietqr: { name: 'Ana', bin: '970436', account: '123456', amount: '5000' },
   };
   assert.deepEqual(Object.keys(cases).sort(), Object.keys(H.formats).sort());
   for (const [f, p] of Object.entries(cases)) {

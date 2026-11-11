@@ -31,7 +31,7 @@ func newTestApp(t *testing.T, sso bool) (*App, *httptest.Server) {
 	files := fstest.MapFS{
 		"index.html":                  {Data: []byte("<!doctype html><title>PayHop</title>")},
 		"assets/app-abc123.js":        {Data: []byte("console.log(1)")},
-		"hop-assets/v8/hop-hero3d.js": {Data: []byte("window.HopHero3D={}")},
+		"hop-assets/v9/hop-hero3d.js": {Data: []byte("window.HopHero3D={}")},
 		"fonts/a.woff2":               {Data: []byte("x")},
 		"sw.js":                       {Data: []byte("self.skip=1")},
 		"changelog.json":              {Data: []byte("{}")},
@@ -100,7 +100,7 @@ func TestStaticHeadersAndRoutes(t *testing.T) {
 		{"/split", "no-cache", 200},
 		{"/sw.js", "no-cache", 200},
 		{"/assets/app-abc123.js", "public, max-age=31536000, immutable", 200},
-		{"/hop-assets/v8/hop-hero3d.js", "public, max-age=31536000, immutable", 200},
+		{"/hop-assets/v9/hop-hero3d.js", "public, max-age=31536000, immutable", 200},
 		{"/fonts/a.woff2", "public, max-age=31536000, immutable", 200},
 		{"/missing.js", "", 404},
 	} {
@@ -308,5 +308,32 @@ func TestSignOutLinkReturnsToApp(t *testing.T) {
 	want := "https://hub.example.org/logout?return=" + url.QueryEscape(srv.URL+"/")
 	if me["logout_url"] != want {
 		t.Fatalf("logout_url = %v, want %q", me["logout_url"], want)
+	}
+}
+
+func TestPublicRoutesCarryTheirOwnCanonicalInTheServedHTML(t *testing.T) {
+	d, _ := db.Open(":memory:")
+	t.Cleanup(func() { d.Close() })
+	files := fstest.MapFS{"index.html": {Data: []byte(`<head><link rel="canonical" href="https://pay.example.org/"></head>`)}}
+	a, err := New(Config{Version: "test"}, d, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(a.Handler())
+	t.Cleanup(srv.Close)
+	for path, want := range map[string]string{
+		"/": "https://pay.example.org/", "/generate": "https://pay.example.org/generate", "/split": "https://pay.example.org/split",
+		"/terms": "https://pay.example.org/terms", "/privacy": "https://pay.example.org/privacy", "/changelog": "https://pay.example.org/changelog",
+		"/account": "https://pay.example.org/", // private page: the shell as it is (the app marks it noindex)
+	} {
+		res, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if !strings.Contains(string(b), `<link rel="canonical" href="`+want+`">`) || strings.Count(string(b), "canonical") != 1 {
+			t.Errorf("%s: %s", path, b)
+		}
 	}
 }

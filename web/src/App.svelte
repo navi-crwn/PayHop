@@ -52,6 +52,21 @@
     document.documentElement.dataset.theme = theme;
   });
 
+  // the address search engines should keep for this page, and no index for the signed-in page
+  $effect(() => {
+    const p = known(route.path) ? route.path : '/';
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p));
+    let robots = document.querySelector('meta[name="robots"]');
+    if (route.path === '/account') {
+      if (!robots) {
+        robots = document.createElement('meta');
+        robots.setAttribute('name', 'robots');
+        document.head.appendChild(robots);
+      }
+      robots.setAttribute('content', 'noindex');
+    } else robots?.remove();
+  });
+
   $effect(() => {
     void i18n.load(locale).then(() => {
       document.title = t('app.title');
@@ -228,7 +243,7 @@
 {:else}
   <main>{@render page()}</main>
   <footer class="ft" id="footer"><div class="wrap">
-    <div class="ft-part"><img src="/hop-assets/v8/apps/hub/hop-id-mark.svg" alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
+    <div class="ft-part"><img src={FAMILY.find((f) => f.slug === "hub")?.mark} alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
     <div class="ft-cols">
       <div class="ft-brand"><a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
       <div><h2 class="ft-h">{t('ft.support')}</h2><ul>

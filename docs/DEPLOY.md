@@ -1,8 +1,8 @@
 # Deploying PayHop
 
 PayHop is one Go binary with the browser app embedded. It listens on `127.0.0.1:8105` behind nginx at
-`pay.hel.ink`, with the same layout as FileHop. It stores only HOP ID accounts and sessions in SQLite; guests
-leave nothing on the server. It never moves or processes money.
+`pay.hel.ink`, with the same layout as FileHop. It stores HOP ID accounts and sessions in SQLite and, only for accounts that choose it, saved
+payment methods and bills (encrypted, see section 4a); guests leave nothing on the server. It never moves or processes money.
 
 ## 1. Build (as a normal user)
 
@@ -39,7 +39,30 @@ binary (the old one is kept as `payhop.prev`) and restart. Check before running:
 ## 4. Settings (`/etc/payhop/payhop.env`)
 
 See `deploy/payhop.env.example`. `PAYHOP_HOP_CLIENTS=imperium,helink` are the apps allowed to call `/hop/*`.
-Saved payment methods and bill history are **not** part of this release, so there is no `PAYHOP_PROFILE_KEY` yet.
+
+### 4a. The key for saved methods and bills (`PAYHOP_PROFILE_KEY`)
+
+Saved payment methods (up to 20 per account) and bill history (the last 200) are encrypted with AES-256-GCM
+before they reach the database, one random nonce per row, with the account and the kind bound in. The key is
+32 random bytes, base64, in `/etc/payhop/payhop.env` (0640). The installer never creates or prints it; the owner makes it once:
+
+```bash
+openssl rand -base64 32          # put the output in PAYHOP_PROFILE_KEY=, nowhere else
+```
+
+- **Not set:** the app runs; sign-in, the generator and the split calculator work; saving shows "switched off" and
+  the API answers 503 `storage_off`. Setting it later turns saving on at the next restart.
+- **Malformed** (not base64 of 32 bytes): the server refuses to start and says which variable is wrong, never what it holds.
+- **Back it up separately from the database.** The database holds only ciphertext. Lose the key and the saved items
+  cannot be read (the account page hides them and still lets the person delete them). Back up the env file, not
+  the database, as the place the key lives.
+- **Rotation** (two steps, no downtime beyond two restarts):
+  1. Put the new key in `PAYHOP_PROFILE_KEY` and the old one in `PAYHOP_PROFILE_KEY_PREV`; restart. Old rows still open.
+  2. Run `sudo -u payhop bash -c 'set -a; . /etc/payhop/payhop.env; set +a; /usr/local/bin/payhop reencrypt'`.
+     It rewrites every row under the new key in one transaction and prints how many.
+     If a row cannot be opened it changes nothing and says so. Then remove `PAYHOP_PROFILE_KEY_PREV` and restart.
+- **Never in logs or Imperium:** nothing saved is logged and `/hop/*` carries no saved data, not even a count (`/hop/stats` has accounts and sessions only).
+  When a HOP ID is deleted the hub's `account.deleted` event removes the account's rows with it.
 
 ## 5. Checks
 
@@ -57,4 +80,4 @@ in its code or vhost), PayHop leaves it to the edge. Turn it on in Cloudflare (S
 
 `sudo cp /usr/local/bin/payhop.prev /usr/local/bin/payhop && sudo systemctl restart payhop`. To remove,
 stop and disable the unit, delete `/etc/systemd/system/payhop.service`, the nginx vhost and `/etc/payhop`;
-the database in `/var/lib/payhop` holds only accounts that signed in.
+the database in `/var/lib/payhop` holds the accounts that signed in and, encrypted, what they chose to save.

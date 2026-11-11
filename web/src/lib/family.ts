@@ -1,6 +1,9 @@
-/* The other HOP apps (hop-assets v8 manifest, current app omitted). Written out rather than
-   fetched: the page loads nothing from another origin. tools/family.test.mjs checks this list
-   against tools/hop-apps.json. */
+/* The other HOP apps, read from the hop-assets manifest (tools/hop-apps.json, a byte copy of the hub's
+   apps.json) when the app is built: no list is written out by hand here. The current app and the apps that are
+   not public (Imperium) are left out. Marks and tiles point at the files vendored under /hop-assets/<version>/;
+   tools/family.test.mjs checks that every one of them exists. */
+
+import manifest from '../../../tools/hop-apps.json';
 
 export interface FamilyApp {
   slug: string;
@@ -11,16 +14,32 @@ export interface FamilyApp {
   tile: string;
 }
 
-const A = '/hop-assets/v8';
+interface ManifestApp {
+  slug: string;
+  name: string;
+  url: string;
+  public?: boolean;
+  icons: { mark: { url: string } };
+}
 
-export const FAMILY: FamilyApp[] = [
-  { slug: 'hub', name: 'HOP ID', url: 'https://hel.ink', host: 'hel.ink', mark: `${A}/apps/hub/hop-id-mark.svg`, tile: 'hub' },
-  { slug: 'linkhop', name: 'LinkHop', url: 'https://link.hel.ink', host: 'link.hel.ink', mark: `${A}/apps/linkhop/mark.svg`, tile: 'linkhop' },
-  { slug: 'biohop', name: 'BioHop', url: 'https://bio.hel.ink', host: 'bio.hel.ink', mark: `${A}/apps/biohop/mark.svg`, tile: 'biohop' },
-  { slug: 'pixelhop', name: 'PixelHop', url: 'https://pixel.hel.ink', host: 'pixel.hel.ink', mark: `${A}/apps/pixelhop/mark.svg`, tile: 'pixelhop' },
-  { slug: 'notehop', name: 'NoteHop', url: 'https://note.hel.ink', host: 'note.hel.ink', mark: `${A}/apps/notehop/mark.svg`, tile: 'notehop' },
-  { slug: 'filehop', name: 'FileHop', url: 'https://file.hel.ink', host: 'file.hel.ink', mark: `${A}/apps/filehop/mark.svg`, tile: 'filehop' }
-];
+/** https://hel.ink/hop-assets/v9/apps/x/mark.svg -> /hop-assets/v9/apps/x/mark.svg (the vendored copy). */
+const local = (url: string) => new URL(url).pathname;
+
+export const ASSET_VERSION: string = manifest.version;
+
+export const FAMILY: FamilyApp[] = (manifest.apps as unknown as ManifestApp[])
+  .filter((a) => a.public !== false && a.slug !== 'payhop')
+  .map((a) => ({
+    slug: a.slug,
+    name: a.name,
+    url: a.url.replace(/\/$/, ''),
+    host: new URL(a.url).hostname,
+    mark: local(a.icons.mark.url),
+    tile: a.slug
+  }));
+
+/** The tile image of an app on the home page: `light` or `dark`. */
+export const tileSrc = (f: FamilyApp, scheme: 'light' | 'dark') => `/hop-assets/${ASSET_VERSION}/home/${f.tile}-${scheme}.webp`;
 
 /** Signed in through the hub, another app opens through the hub's launcher, which signs the person
     in there too; signed out, the public address is the right one. */

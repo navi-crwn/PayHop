@@ -54,6 +54,17 @@ export const FORMAT_DEFS: FormatDef[] = [
     { key: 'bic', label: 'f.bic', ph: '', size: 'short' },
     { key: 'amount', label: 'f.amount_eur', ph: '12.34', size: 'short', num: true },
     { key: 'reference', label: 'f.reference', ph: '', size: '' }
+  ] },
+  { id: 'promptpay', label: 'PromptPay', group: 'bank', fields: [
+    { key: 'name', label: 'f.name', hint: 'f.name_hint', ph: '', size: '' },
+    { key: 'phone', label: 'f.phone_th', hint: 'f.phone_th_hint', ph: '081 234 5678', size: 'narrow' },
+    { key: 'amount', label: 'f.amount_thb', ph: '250', size: 'short', num: true }
+  ] },
+  { id: 'vietqr', label: 'VietQR', group: 'bank', fields: [
+    { key: 'name', label: 'f.name', hint: 'f.name_hint', ph: '', size: '' },
+    { key: 'bin', label: 'f.bin', hint: 'f.bin_hint', ph: '970436', size: 'short' },
+    { key: 'account', label: 'f.account', ph: '', size: 'narrow' },
+    { key: 'amount', label: 'f.amount_vnd', ph: '50000', size: 'short', num: true }
   ] }
 ];
 
