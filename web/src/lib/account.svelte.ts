@@ -73,6 +73,12 @@ export function takeRecheckMark(): boolean {
   return true;
 }
 
+/** The Sign in link that returns to the given path afterwards. Every in-app sign-in link must be built here: the server
+ *  (ssoStart in internal/app/sso.go) treats a start with next=/ and no back=1 as the hub launcher and lands on /account. */
+export function signInHref(path: string): string {
+  return '/auth/sso?back=1&next=' + encodeURIComponent(path);
+}
+
 /** One quiet trip through the hub for a session it has not vouched for lately (page load only, never repeated). */
 export function recheckQuietly(next: string): void {
   location.replace('/auth/sso?prompt=none&next=' + encodeURIComponent(next));

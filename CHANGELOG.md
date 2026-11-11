@@ -5,6 +5,12 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-11-12
+
+### Changed
+- Opening PayHop from the hub's launcher lands on the account page, signed in. The Sign in button on any page returns to that page. In-app sign-in links are built by one helper (`signInHref`); the server tells the two cases apart by `back=1`, and the landing is always a local path.
+- Tests for the landing rules, and for a second account signing in after sign-out seeing nothing of the first.
+
 ## [0.0.1] - 2026-11-11
 
 The first release: payment QR codes and split bills in the browser, accounts that can keep payment methods and bills (encrypted, only on request), part of the HOP family on hop-assets v9.
@@ -31,5 +37,6 @@ The first release: payment QR codes and split bills in the browser, accounts tha
 ### Not yet
 - QRIS, Pix and other bank-QR schemes; pasting someone else's QR (needs real sample codes and wallet tests).
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/navi-crwn/PayHop/releases/tag/v0.0.1

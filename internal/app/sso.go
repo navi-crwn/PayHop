@@ -82,6 +82,12 @@ func (a *App) ssoStart(w http.ResponseWriter, r *http.Request) {
 	// prompt=none: the hub must never show a login page. It answers with a ticket, or with
 	// error=login_required to the callback, which then ends this app's session.
 	silent := r.FormValue("prompt") == "none"
+	// The hub's launcher starts this flow with no page behind it (next is empty or the home page), and that
+	// person belongs on the account page. PayHop's own Sign in link on a page says back=1: it returns to that
+	// page (build those links with signInHref in web/src/lib/account.svelte.ts, never by hand). A quiet re-check always comes from a page, so it keeps its own path.
+	if !silent && (next == "" || next == "/") && r.FormValue("back") != "1" {
+		next = dashboardPath
+	}
 	mark := state + "|" + url.QueryEscape(next)
 	if silent {
 		mark += "|none"
