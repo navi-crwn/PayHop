@@ -190,7 +190,7 @@
       </div>
     </details>
   {:else if account.ready && account.sso}
-    <a class="btn btn--sm btn--outline" id="signin" href={'/auth/sso?next=' + encodeURIComponent(path)}>{t('top.signin')}</a>
+    <a class="btn btn--sm btn--outline" id="signin" href={'/auth/sso?back=1&next=' + encodeURIComponent(path)}>{t('top.signin')}</a>
   {/if}
 </div></header>
 
