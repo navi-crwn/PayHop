@@ -5,6 +5,10 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+### Changed
+- Opening PayHop from the hub's launcher lands on the account page, signed in. The Sign in button on any page returns to that page. In-app sign-in links are built by one helper (`signInHref`); the server tells the two cases apart by `back=1`, and the landing is always a local path.
+- Tests for the landing rules, and for a second account signing in after sign-out seeing nothing of the first.
+
 ## [0.0.1] - 2026-11-11
 
 The first release: payment QR codes and split bills in the browser, accounts that can keep payment methods and bills (encrypted, only on request), part of the HOP family on hop-assets v9.

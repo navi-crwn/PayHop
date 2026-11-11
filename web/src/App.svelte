@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { i18n, guessLocale, LOCALES, LOCALE_NAMES } from './lib/i18n/index.svelte';
-  import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly } from './lib/account.svelte';
+  import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly, signInHref } from './lib/account.svelte';
   import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
   import { BRAND } from './lib/brand';
@@ -190,7 +190,7 @@
       </div>
     </details>
   {:else if account.ready && account.sso}
-    <a class="btn btn--sm btn--outline" id="signin" href={'/auth/sso?back=1&next=' + encodeURIComponent(path)}>{t('top.signin')}</a>
+    <a class="btn btn--sm btn--outline" id="signin" href={signInHref(path)}>{t('top.signin')}</a>
   {/if}
 </div></header>
 
@@ -203,7 +203,7 @@
   {:else if path === '/privacy'}<Legal kind="priv" />
   {:else if path === '/account'}
     {#if signedIn}<Dashboard />{:else if account.ready}
-      <div class="wrap nf"><h1>{t('top.signin')}</h1><a class="btn btn--primary" href="/auth/sso?next=%2Faccount">{t('top.signin')}</a></div>
+      <div class="wrap nf"><h1>{t('top.signin')}</h1><a class="btn btn--primary" href={signInHref('/account')}>{t('top.signin')}</a></div>
     {/if}
   {:else}
     <div class="wrap nf"><h1>{t('nf.title')}</h1><a class="btn btn--outline" href="/">{t('nf.back')}</a></div>

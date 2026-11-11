@@ -4,7 +4,7 @@
   import { build, HopPayError } from '../pay';
   import { FORMAT_DEFS, FORMAT_BY_ID, emptyValues } from '../formats';
   import { makeQr, qrPng } from '../qr';
-  import { account } from '../account.svelte';
+  import { account, signInHref } from '../account.svelte';
   import { saved, loadSaved, saveMethod, saveBill } from '../saved.svelte';
   import { methodBody, methodTitle, applyMethod, billBody, errorKey } from '../saved-model.js';
   import Icon from '../Icon.svelte';
@@ -195,7 +195,7 @@
           <p class="hint" style="margin:0">…</p>
         {:else}
           <p class="hint" style="margin:0 0 12px">{t('gen.save_hint')}</p>
-          {#if account.ready && account.sso}<a class="btn btn--outline" id="saveSignin" href={'/auth/sso?next=' + encodeURIComponent('/generate')}>{t('top.signin')}</a>{/if}
+          {#if account.ready && account.sso}<a class="btn btn--outline" id="saveSignin" href={signInHref('/generate')}>{t('top.signin')}</a>{/if}
         {/if}
       </div>
     </div>
