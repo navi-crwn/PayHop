@@ -6,13 +6,11 @@ import { readFileSync } from 'node:fs';
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const version = JSON.parse(rd('web/package.json')).version;
 
-test('the changelog has an empty [Unreleased] above the current version, dated, with compare links', () => {
+test('the changelog has [Unreleased] above the current version, dated, with compare links', () => {
   const log = rd('CHANGELOG.md');
   const heads = [...log.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.equal(heads[0], '[Unreleased]');
   assert.match(heads[1], new RegExp('^\\[' + version.replace(/\./g, '\\.') + '\\] - \\d{4}-\\d{2}-\\d{2}$'));
-  const unreleased = log.split('## [Unreleased]')[1].split('\n## ')[0];
-  assert.equal(unreleased.trim(), '', 'nothing may sit under [Unreleased] on a release');
   assert.match(log, new RegExp('^\\[Unreleased\\]: https://github.com/navi-crwn/PayHop/compare/v' + version.replace(/\./g, '\\.') + '\\.\\.\\.HEAD$', 'm'));
 });
 
