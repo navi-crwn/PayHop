@@ -1,5 +1,5 @@
 import qrcode from 'qrcode-generator';
-import { clipToFit } from './text.js';
+import { clipToFit, graphemes } from './text.js';
 
 export interface Qr {
   n: number;
@@ -41,20 +41,34 @@ export interface PngText {
   sample?: string;
 }
 
-/** `s` broken into lines at spaces (or, with no space, anywhere) so that each line fits. */
-function wrapLines(s: string, fits: (x: string) => boolean): string[] {
+/** `s` broken into lines that fit: at spaces, and a word wider than the picture (Japanese and Chinese have no spaces) per character. Nothing is dropped. */
+export function wrapLines(s: string, fits: (x: string) => boolean): string[] {
   const out: string[] = [];
   let line = '';
   for (const w of s.split(/\s+/).filter(Boolean)) {
     const next = line ? line + ' ' + w : w;
-    if (fits(next) || !line) line = next;
-    else {
+    if (fits(next)) {
+      line = next;
+      continue;
+    }
+    if (line) {
       out.push(line);
+      line = '';
+    }
+    if (fits(w)) {
       line = w;
+      continue;
+    }
+    for (const g of graphemes(w)) {
+      if (!line || fits(line + g)) line += g;
+      else {
+        out.push(line);
+        line = g;
+      }
     }
   }
   if (line) out.push(line);
-  return out.map((l) => clipToFit(l, fits));
+  return out;
 }
 
 /** The PNG people share: the code, then the receiver name and amount PRINTED under it. */

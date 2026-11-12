@@ -5,7 +5,7 @@
   import { build, splitBill, parseAmount, formatMinor, exponent, formats, HopPayError } from '../pay';
   import { FORMAT_BY_ID, emptyValues } from '../formats';
   import { makeQr } from '../qr';
-  import { isSample, sampleValues } from '../sample.js';
+  import { isSample, sampleValues, livePayload } from '../sample.js';
   import Icon from '../Icon.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
@@ -40,7 +40,7 @@
   function loadExample() {
     people = ['A', 'B', 'C'].map((name) => ({ id: uid('p'), name }));
     payerId = people[0].id;
-    items = [['Pizza', '45.00'], ['Pasta', '35.00'], ['Drinks', '20.00']].map(([name, price]) => ({ id: uid('i'), name, price, shares: [] }));
+    items = [[t('split.sample_item1'), '45.00'], [t('split.sample_item2'), '35.00'], [t('split.sample_item3'), '20.00']].map(([name, price]) => ({ id: uid('i'), name, price, shares: [] }));
     tax = '';
     tip = '';
     roundTo = '0';
@@ -173,7 +173,7 @@
     try {
       const params = { ...mvals[method], amount: formatMinor(p.due, currency), currency };
       const out = build(method, params);
-      return { p, out, qr: makeQr(out.payload, t('gen.qr_label')) };
+      return { p, out, qr: makeQr(livePayload(exampleOn, out.payload), t('gen.qr_label')) };
     } catch (e) {
       if (e instanceof HopPayError) return { p, error: errText(e.code) };
       throw e;
@@ -299,7 +299,7 @@
 
           {#if share}
             <div id="shareQr">
-              {#if exampleOn}<div class="sample-badge" id="sampleBadge" role="note">{t('sample.badge')}</div>{/if}
+              {#if exampleOn}<div class="sample-badge" id="sampleBadge" role="note">{t('sample.badge')}</div><p class="hint" id="sampleUnpayable" style="margin:0 0 8px">{t('sample.unpayable')}</p>{/if}
               {#if share.error}
                 <p class="note">{t('split.no_qr', { reason: share.error })}</p>
               {:else if share.out && share.qr}

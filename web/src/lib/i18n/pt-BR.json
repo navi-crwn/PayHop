@@ -270,5 +270,9 @@
   "split.sample_clear": "Limpar o exemplo",
   "home.sample_pre": "Ainda sem forma de pagamento?",
   "home.sample_link": "Experimente um exemplo.",
-  "nojs.note": "O PayHop precisa de JavaScript para gerar um código ou dividir uma conta; ative-o para usar o app."
+  "nojs.note": "O PayHop precisa de JavaScript para gerar um código ou dividir uma conta; ative-o para usar o app.",
+  "split.sample_item1": "Pizza",
+  "split.sample_item2": "Massa",
+  "split.sample_item3": "Bebidas",
+  "sample.unpayable": "Este código de exemplo não pode ser pago: os apps de banco o recusam de propósito."
 }

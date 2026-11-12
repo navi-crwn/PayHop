@@ -270,5 +270,9 @@
   "split.sample_clear": "Clear the example",
   "home.sample_pre": "No payment method yet?",
   "home.sample_link": "Try a sample.",
-  "nojs.note": "PayHop needs JavaScript to make a code or split a bill; turn it on to use the app."
+  "nojs.note": "PayHop needs JavaScript to make a code or split a bill; turn it on to use the app.",
+  "split.sample_item1": "Pizza",
+  "split.sample_item2": "Pasta",
+  "split.sample_item3": "Drinks",
+  "sample.unpayable": "This sample code cannot be paid: banking apps refuse it on purpose."
 }

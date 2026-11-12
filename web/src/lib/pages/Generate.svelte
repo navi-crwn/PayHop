@@ -8,7 +8,7 @@
   import { account, signInHref } from '../account.svelte';
   import { saved, loadSaved, saveMethod, saveBill } from '../saved.svelte';
   import { methodBody, methodTitle, applyMethod, billBody, errorKey } from '../saved-model.js';
-  import { isSample, hasSample, sampleValues, FALLBACK_FORMAT } from '../sample.js';
+  import { isSample, hasSample, sampleValues, FALLBACK_FORMAT, livePayload, pngText } from '../sample.js';
   import Icon from '../Icon.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
@@ -70,7 +70,9 @@
     }
   });
 
-  const qr = $derived(result.ok ? makeQr(result.out.payload, t('gen.qr_label')) : null);
+  // what the code, the text box, the copy button and the PNG all carry; in sample mode it is not payable
+  const payload = $derived(result.ok ? livePayload(sample, result.out.payload) : '');
+  const qr = $derived(result.ok ? makeQr(payload, t('gen.qr_label')) : null);
 
   // a new payload means a new thing to confirm
   let lastPayload = '';
@@ -133,14 +135,7 @@
   async function download() {
     if (!result.ok || (!confirmed && !sample)) return;
     const d = result.out.display;
-    const blob = await qrPng(result.out.payload, {
-      name: d.receiverName,
-      amount: amountText(d),
-      scheme: d.scheme,
-      made: t('gen.png_made'),
-      check: t('gen.png_check'),
-      sample: sample ? t('sample.badge') : undefined
-    });
+    const blob = await qrPng(payload, pngText(d, amountText(d), sample, t));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `payhop-${sample ? 'sample-' : ''}${fmt}-${slug(d.receiverName)}.png`;
@@ -151,7 +146,7 @@
   async function copy() {
     if (!result.ok) return;
     try {
-      await navigator.clipboard.writeText(result.out.payload);
+      await navigator.clipboard.writeText(payload);
       copied = true;
       setTimeout(() => (copied = false), 1600);
     } catch {
@@ -263,6 +258,7 @@
               {#if d.amount}<span class="chip num">{amountText(d)}</span>{:else}<span class="chip">{t('gen.no_amount')}</span>{/if}
               <span class="chip chip--warn">{t('gen.not_tested')}</span>
             </div>
+            {#if sample}<p class="hint" id="sampleUnpayable">{t('sample.unpayable')}</p>{/if}
           </div>
           {#if result.out.warnings.length}
             <ul class="warns">{#each result.out.warnings as w}<li>{warnText(w)}</li>{/each}</ul>
@@ -272,7 +268,7 @@
             <button class="btn btn--primary" id="dl" disabled={!confirmed && !sample} onclick={download}><Icon name="down" />{t('gen.download')}</button>
             <button class="btn btn--outline" id="cp" onclick={copy}><Icon name="copy" />{copied ? t('gen.copied') : t('gen.copy')}</button>
           </div>
-          <div class="payload mono" id="payload">{result.out.payload}</div>
+          <div class="payload mono" id="payload">{payload}</div>
           <p class="note">{t('gen.png_note')}</p>
         {:else}
           <div class="qrcard off" id="qrBox">{t('gen.fix')}</div>

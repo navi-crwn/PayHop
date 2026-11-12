@@ -40,3 +40,30 @@ export function isSample(format, values) {
   if (!ids || !values) return false;
   return ids.some((k) => norm(values[k]) !== '' && norm(values[k]) === norm(SAMPLES[format][k]));
 }
+
+/**
+ * A sample code must be refused by banking apps. The EPC payload of the sample is complete and its IBAN is valid, so
+ * the screen shows a realistic example (the form values still pass build()); the code itself, the raw text and the PNG
+ * carry this payload instead: the first line, the EPC service tag "BCD", is replaced, so no banking app reads it.
+ */
+export const SAMPLE_TAG = 'SAMPLE-NOT-PAYABLE';
+
+export function samplePayload(payload) {
+  const i = String(payload).indexOf('\n');
+  return SAMPLE_TAG + (i < 0 ? '\n' + payload : payload.slice(i));
+}
+
+/** What is encoded, shown as text, copied and printed: the real payload, or the non-payable one in sample mode. */
+export const livePayload = (sample, payload) => (sample ? samplePayload(payload) : payload);
+
+/** What the page hands to the PNG writer (qrPng): the receiver, the amount, and in sample mode the marker. `t` is the translator. */
+export function pngText(display, amount, sample, t) {
+  return {
+    name: display.receiverName,
+    amount,
+    scheme: display.scheme,
+    made: t('gen.png_made'),
+    check: t('gen.png_check'),
+    sample: sample ? t('sample.badge') : undefined
+  };
+}

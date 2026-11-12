@@ -270,5 +270,9 @@
   "split.sample_clear": "Hapus contoh",
   "home.sample_pre": "Belum punya metode pembayaran?",
   "home.sample_link": "Coba contoh.",
-  "nojs.note": "PayHop butuh JavaScript untuk membuat kode atau membagi tagihan; aktifkan untuk memakai aplikasi."
+  "nojs.note": "PayHop butuh JavaScript untuk membuat kode atau membagi tagihan; aktifkan untuk memakai aplikasi.",
+  "split.sample_item1": "Pizza",
+  "split.sample_item2": "Pasta",
+  "split.sample_item3": "Minuman",
+  "sample.unpayable": "Kode contoh ini tidak bisa dibayar: aplikasi bank sengaja menolaknya."
 }
