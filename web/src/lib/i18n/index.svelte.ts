@@ -1,4 +1,5 @@
 import en from './en.json';
+import { readLang, browserCtx } from '../prefs.js';
 
 /* Nine languages, no Arabic, per the family rule. A missing key falls back to
    English and warns once, so the UI never shows a raw key. `dict` is a $state so
@@ -39,25 +40,10 @@ export function isLocale(v: string): v is Locale {
   return (LOCALES as readonly string[]).includes(v);
 }
 
-function readStored(): string | null {
-  try {
-    return localStorage.getItem('hop-lang');
-  } catch {
-    return null;
-  }
-}
-
-function storeLocale(l: string): void {
-  try {
-    localStorage.setItem('hop-lang', l);
-  } catch {
-    /* private mode: the choice just does not survive a reload */
-  }
-}
-
 export function guessLocale(): Locale {
-  const stored = readStored();
-  if (stored && isLocale(stored)) return stored;
+  // the family choice first: cookie hop_lang, then this app's older localStorage key (lib/prefs.js)
+  const chosen = readLang(browserCtx());
+  if (chosen && isLocale(chosen)) return chosen;
   const tags = navigator.languages ?? [navigator.language];
   for (const tag of tags) {
     const exact = LOCALES.find((l) => l.toLowerCase() === tag.toLowerCase());
@@ -84,7 +70,6 @@ class I18nState {
     this.dict = d;
     this.locale = locale;
     document.documentElement.lang = locale;
-    storeLocale(locale);
   }
 
   t(key: string, vars?: Record<string, string | number>): string {
