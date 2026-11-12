@@ -160,7 +160,7 @@ func TestPublicPagesUseTheAppsOwnWords(t *testing.T) {
 	for _, p := range publicPages {
 		keys := append([]string{p.Title, p.Lead, p.Nav, "nojs.note", "nav.main", "nav.generate", "nav.split", "legal.updated"}, p.H1...)
 		if p.Kind == "home" {
-			keys = append(keys, "hero.h1_pre", "hero.h1_accent", "hero.cta_qr", "hero.cta_split", "hero.proof", "hero.h1")
+			keys = append(keys, "hero.h1_pre", "hero.h1_accent", "hero.cta_qr", "hero.cta_split", "hero.proof", "hero.h1", "home.sample_pre", "home.sample_link")
 		}
 		for _, o := range []string{p.Desc, p.ListTitle} {
 			if o != "" {

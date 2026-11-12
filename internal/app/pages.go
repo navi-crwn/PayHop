@@ -187,7 +187,8 @@ func firstView(p publicPage, text func(...string) string) string {
 		// the hero as web/src/lib/pages/Home.svelte draws it, then the six things it does
 		s.WriteString(`<section class="hero"><div class="wrap"><div><h1 class="big">` + text("hero.h1_pre") + ` <em>` + text("hero.h1_accent") + `</em></h1>`)
 		s.WriteString(`<p class="lede">` + text(p.Lead) + `</p><div class="cta"><a class="btn btn--primary btn--lg" href="/generate">` + text("hero.cta_qr") + `</a><a class="btn btn--outline btn--lg" href="/split">` + text("hero.cta_split") + `</a></div>`)
-		s.WriteString(`<p class="proof">` + text("hero.proof") + `</p></div>`)
+		s.WriteString(`<p class="proof">` + text("hero.proof") + `</p>`)
+		s.WriteString(`<p class="sample-line">` + text("home.sample_pre") + ` <a href="/generate?sample=1">` + text("home.sample_link") + `</a></p></div>`)
 		s.WriteString(`<figure class="hero-art" aria-hidden="true" style="margin:0"><img class="still lt" src="` + brandStillLight + `" alt="" width="380" height="380"><img class="still dk" src="` + brandStillDark + `" alt="" width="380" height="380"></figure></div></section>`)
 		s.WriteString(`<section class="blk"><div class="wrap">`)
 		items("hop-static-list")

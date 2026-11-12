@@ -160,6 +160,16 @@
   }
 </script>
 
+{#snippet picker()}
+  <div class="field field--narrow" style="margin-bottom:14px">
+    <label class="lbl" for="useSaved">{t('gen.use_saved')}</label>
+    <select class="select" id="useSaved" onchange={pickSaved}>
+      <option value="">{t('gen.use_saved_pick')}</option>
+      {#each saved.methods as m (m.id)}<option value={m.id}>{methodTitle(m)}</option>{/each}
+    </select>
+  </div>
+{/snippet}
+
 <div class="wrap page">
   <div class="page-head"><h1>{t('gen.title')}</h1><p>{t('gen.sub')}</p></div>
   <div class="two">
@@ -204,16 +214,13 @@
       <div class="card" id="saveCard">
         <h2>{t('gen.save_title')}</h2>
         {#if sample}
+          {#if canSave && saved.loaded && saved.enabled && saved.methods.length}
+            {@render picker()}
+          {/if}
           <p class="hint" style="margin:0" id="sampleNoSave">{t('sample.nosave')}</p>
         {:else if canSave && saved.loaded && saved.enabled}
           {#if saved.methods.length}
-            <div class="field field--narrow" style="margin-bottom:14px">
-              <label class="lbl" for="useSaved">{t('gen.use_saved')}</label>
-              <select class="select" id="useSaved" onchange={pickSaved}>
-                <option value="">{t('gen.use_saved_pick')}</option>
-                {#each saved.methods as m (m.id)}<option value={m.id}>{methodTitle(m)}</option>{/each}
-              </select>
-            </div>
+            {@render picker()}
           {/if}
           <div class="field field--narrow" style="margin-bottom:12px">
             <label class="lbl" for="saveLabel">{t('gen.save_label')}</label>

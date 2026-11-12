@@ -439,3 +439,4 @@ dialog.confirm .actions { justify-content: flex-end; }
   :root:not([data-theme]) .hero-art .lt { display: none; }
   :root:not([data-theme]) .hero-art .dk { display: block; }
 }
+#shareQr .sample-badge { margin-top: 14px; }
