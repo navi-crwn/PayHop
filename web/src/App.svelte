@@ -29,9 +29,8 @@
   let toast = $state('');
   let toastTimer: number | undefined;
 
-  const ctx = browserCtx;
   function readTheme(): 'dark' | 'light' {
-    return readThemePref({ ...ctx(), prefersDark: matchMedia('(prefers-color-scheme: dark)').matches }) as 'dark' | 'light';
+    return readThemePref({ ...browserCtx(), prefersDark: matchMedia('(prefers-color-scheme: dark)').matches }) as 'dark' | 'light';
   }
   // optional Clean style: one cookie on .hel.ink, so the choice holds in every HOP app
   let ui = $state<'hop' | 'clean'>(document.documentElement.dataset.ui === 'clean' ? 'clean' : 'hop');
@@ -44,7 +43,7 @@
   }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
-    saveTheme(ctx(), theme);
+    saveTheme(browserCtx(), theme);
   }
   $effect(() => {
     document.documentElement.dataset.theme = theme;
@@ -180,7 +179,7 @@
     {#if langOpen}
       <div class="menu-pop" id="langPop" role="listbox" aria-label={t('top.language')} tabindex="-1" bind:this={langList} onkeydown={onLangKey}>
         {#each LOCALES as l}
-          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(ctx(), l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
+          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
         {/each}
       </div>
     {/if}
