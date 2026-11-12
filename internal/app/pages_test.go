@@ -92,16 +92,65 @@ func TestPublicPagesAreReadableWithoutScripts(t *testing.T) {
 	}
 	for _, p := range publicPages {
 		_, body := fetchPage(t, srv.URL+p.Path)
-		if !strings.Contains(body, `<div id="root"><main class="hop-static"><h1>`) || !strings.Contains(body, "<li>") {
-			t.Errorf("%s: no summary inside the mount node", p.Path)
+		if !strings.Contains(body, `<div id="root"><header class="top">`) || !strings.Contains(body, `<main class="hop-static">`) {
+			t.Errorf("%s: no first view inside the mount node", p.Path)
 		}
 		for _, o := range publicPages {
 			if o.Path != p.Path && !strings.Contains(body, `<a href="`+o.Path+`">`) {
 				t.Errorf("%s: no plain link to %s", p.Path, o.Path)
 			}
 		}
-		if !strings.Contains(body, `<noscript><style>.hop-static{display:block}</style></noscript>`) {
-			t.Errorf("%s: the summary cannot be read with scripts off", p.Path)
+	}
+}
+
+// Round 2: the first view is visible by default (round 1 hid it and showed it only with scripts off), it is drawn
+// with the app's own classes, its h1 is the app's heading, and the only thing for scripts-off readers is one sentence.
+func TestFirstViewIsVisibleAndSaysWhatTheAppSays(t *testing.T) {
+	srv := builtApp(t)
+	dict := englishStrings()
+	tags := regexp.MustCompile(`<[^>]*>`)
+	for _, p := range publicPages {
+		_, body := fetchPage(t, srv.URL+p.Path)
+		if strings.Contains(body, "display:none") || strings.Contains(body, "<noscript><style>") || strings.Contains(body, "<style>.hop-static") {
+			t.Errorf("%s: the first view is hidden or restyled by an inline style", p.Path)
+		}
+		h1 := one(t, p.Path, "h1", body, regexp.MustCompile(`<h1[^>]*>(.*?)</h1>`))
+		want := dict[p.H1[0]]
+		if p.Path == "/" {
+			want = dict["hero.h1"] // the app draws it as h1_pre <em>h1_accent</em>
+		}
+		if got := strings.Join(strings.Fields(tags.ReplaceAllString(h1, "")), " "); got != strings.Join(strings.Fields(want), " ") {
+			t.Errorf("%s: h1 %q, the app's heading is %q", p.Path, got, want)
+		}
+		if n := strings.Count(body, "<noscript>"); n != 1 {
+			t.Errorf("%s: %d noscript blocks, want 1", p.Path, n)
+		}
+		ns := one(t, p.Path, "noscript", body, regexp.MustCompile(`<noscript>(.*?)</noscript>`))
+		if got := strings.TrimSpace(tags.ReplaceAllString(ns, "")); got != dict["nojs.note"] || strings.Count(got, ".") != 1 || !strings.Contains(got, "JavaScript") {
+			t.Errorf("%s: noscript says %q, want the one sentence %q", p.Path, got, dict["nojs.note"])
+		}
+		if strings.Contains(strings.SplitN(body, `<div id="root">`, 2)[1], "<style") {
+			t.Errorf("%s: a style block inside the first view", p.Path)
+		}
+	}
+	// the home page draws the hero's pictures; the app's brand.ts names the same two files (tools/seo.test.mjs checks that)
+	_, home := fetchPage(t, srv.URL+"/")
+	for _, f := range []string{brandStillLight, brandStillDark, brandMark} {
+		if !strings.Contains(home, `src="`+f+`"`) {
+			t.Errorf("home: no %s in the first view", f)
+		}
+	}
+}
+
+func TestUnknownRouteGetsTheBareShell(t *testing.T) {
+	srv := builtApp(t)
+	for _, path := range []string{"/no-such-page", "/account", "/generate/extra"} {
+		h, body := fetchPage(t, srv.URL+path)
+		if !strings.Contains(body, `<div id="root"></div>`) || strings.Contains(body, "hop-static") {
+			t.Errorf("%s: should be the bare shell", path)
+		}
+		if h.Get("X-Robots-Tag") != "noindex" {
+			t.Errorf("%s: X-Robots-Tag %q", path, h.Get("X-Robots-Tag"))
 		}
 	}
 }
@@ -109,7 +158,10 @@ func TestPublicPagesAreReadableWithoutScripts(t *testing.T) {
 func TestPublicPagesUseTheAppsOwnWords(t *testing.T) {
 	dict := englishStrings()
 	for _, p := range publicPages {
-		keys := append([]string{p.Title, p.Lead, p.Nav}, p.H1...)
+		keys := append([]string{p.Title, p.Lead, p.Nav, "nojs.note", "nav.main", "nav.generate", "nav.split", "legal.updated"}, p.H1...)
+		if p.Kind == "home" {
+			keys = append(keys, "hero.h1_pre", "hero.h1_accent", "hero.cta_qr", "hero.cta_split", "hero.proof", "hero.h1")
+		}
 		for _, o := range []string{p.Desc, p.ListTitle} {
 			if o != "" {
 				keys = append(keys, o)

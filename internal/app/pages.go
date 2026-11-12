@@ -14,13 +14,24 @@ import (
 /*
 The app shell is an empty <div id="root">: a crawler that does not run scripts
 reads nothing in it. So every public route is served with its own title,
-description and canonical address, and with a plain summary of the page inside
-the mount node. web/src/main.ts empties the node before the app mounts and the
-summary is only displayed when scripts are off, so nothing changes on screen.
+description and canonical address, and with a first view inside the mount node:
+a top bar, the page heading and its facts, drawn with the app's own classes
+(web/src/app.css), so it looks like the app and is visible at once, in the
+reader's theme. web/src/main.ts empties the node and mounts the app in the same
+task, so the app takes its place with nothing in between.
 
 The words are the app's own: every entry of publicPages names keys of the
-English dictionary (web/src/lib/i18n/en.json). Nothing is written here.
+English dictionary (web/src/lib/i18n/en.json). Nothing is written here, except
+the two constants below that mirror the app (tools/seo.test.mjs keeps them equal).
 */
+
+// The home hero's pictures and the date on the legal pages, as in web/src/lib/brand.ts and pages/Legal.svelte.
+const (
+	brandMark       = "/hop-assets/v9/apps/payhop/mark.svg"
+	brandStillLight = "/hop-assets/v9/home/payhop-light.webp"
+	brandStillDark  = "/hop-assets/v9/home/payhop-dark.webp"
+	legalUpdated    = "2026-11-11"
+)
 
 type pageItem struct{ Head, Text string }
 
@@ -34,15 +45,15 @@ type publicPage struct {
 	Items     []pageItem // what the page does
 	Nav       string     // what the other pages call this one in their links
 	App       bool       // carries the WebApplication description (the home page)
+	Kind      string     // "home" (hero), "legal" (updated line and one card), "" (heading, then a card)
 }
 
 var publicPages = []publicPage{
 	{
-		Path: "/", Nav: "nav.home", Title: "app.title", H1: []string{"hero.h1"}, Lead: "hero.lede",
+		Path: "/", Nav: "nav.home", Title: "app.title", H1: []string{"hero.h1"}, Lead: "hero.lede", Kind: "home",
 		Items: []pageItem{
 			{"home.b1_t", "home.b1_p"}, {"home.b2_t", "home.b2_p"}, {"home.b3_t", "home.b3_p"},
 			{"home.b4_t", "home.b4_p"}, {"home.b5_t", "home.b5_p"}, {"home.b6_t", "home.b6_p"},
-			{"", "hero.proof"},
 		},
 		App: true,
 	},
@@ -59,11 +70,11 @@ var publicPages = []publicPage{
 	},
 	{Path: "/changelog", Nav: "nav.changelog", Title: "cl.title", Desc: "cl.sub", H1: []string{"cl.title"}, Lead: "cl.sub"},
 	{
-		Path: "/terms", Nav: "terms.t", Title: "terms.t", Desc: "terms.p1", H1: []string{"terms.t"}, Lead: "terms.p1",
+		Path: "/terms", Kind: "legal", Nav: "terms.t", Title: "terms.t", Desc: "terms.p1", H1: []string{"terms.t"}, Lead: "terms.p1",
 		Items: []pageItem{{"", "terms.p2"}, {"", "terms.p3"}, {"", "terms.p5"}, {"", "terms.p4"}},
 	},
 	{
-		Path: "/privacy", Nav: "priv.t", Title: "priv.t", Desc: "priv.p1", H1: []string{"priv.t"}, Lead: "priv.p1",
+		Path: "/privacy", Kind: "legal", Nav: "priv.t", Title: "priv.t", Desc: "priv.p1", H1: []string{"priv.t"}, Lead: "priv.p1",
 		Items: []pageItem{{"", "priv.p2"}, {"", "priv.p5"}, {"", "priv.p3"}, {"", "priv.p4"}},
 	},
 }
@@ -74,10 +85,6 @@ var privatePrefixes = []string{"/api/", "/auth/", "/hop/", "/account"}
 const appCategory = "FinanceApplication"
 
 const pageMount = `<div id="root"></div>`
-
-// Hidden until scripts are known to be off, so the summary never flashes before the app mounts.
-const pageStyle = `<style>.hop-static{display:none;max-width:44rem;margin:0 auto;padding:2rem 1.25rem;line-height:1.6}.hop-static a{color:inherit}</style>` +
-	`<noscript><style>.hop-static{display:block}</style></noscript>`
 
 var (
 	pageTitleRe   = regexp.MustCompile(`<title>[^<]*</title>`)
@@ -131,7 +138,7 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 	b = pageOGURLRe.ReplaceAllLiteral(b, []byte(`<meta property="og:url" content="`+url+`">`))
 
 	canonical := `<link rel="canonical" href="` + url + `">`
-	head := pageStyle
+	head := ""
 	if pageCanonRe.Match(b) {
 		b = pageCanonRe.ReplaceAllLiteral(b, []byte(canonical))
 	} else {
@@ -142,38 +149,83 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 	}
 	b = bytes.Replace(b, []byte("</head>"), []byte(head+"\n</head>"), 1)
 
+	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+firstView(p, text)+`</div>`), 1)
+}
+
+// firstView is what the page shows before the app takes over: the app's own top bar and heading, with its classes.
+func firstView(p publicPage, text func(...string) string) string {
 	var s strings.Builder
-	s.WriteString(`<main class="hop-static"><h1>` + text(p.H1...) + `</h1>`)
-	if v := text(p.Lead); v != "" {
-		s.WriteString("<p>" + v + "</p>")
-	}
-	if v := text(p.ListTitle); v != "" {
-		s.WriteString("<h2>" + v + "</h2>")
-	}
-	if len(p.Items) > 0 {
-		s.WriteString("<ul>")
-	}
-	for _, it := range p.Items {
-		v := text(it.Text)
-		if v == "" {
-			continue
+	cur := func(path string) string {
+		if path == p.Path {
+			return ` aria-current="page"`
 		}
-		if hd := text(it.Head); hd != "" {
-			v = "<strong>" + hd + "</strong>: " + v
+		return ""
+	}
+	s.WriteString(`<header class="top"><div class="wrap"><a class="brand" href="/"><img src="` + brandMark + `" alt="" width="28" height="28"><span class="pname hop-name-payhop">PayHop</span></a>`)
+	s.WriteString(`<nav class="nav" aria-label="` + text("nav.main") + `"><a href="/generate"` + cur("/generate") + `>` + text("nav.generate") + `</a><a href="/split"` + cur("/split") + `>` + text("nav.split") + `</a></nav></div></header>`)
+	s.WriteString(`<main class="hop-static">`)
+
+	items := func(class string) {
+		var li strings.Builder
+		for _, it := range p.Items {
+			v := text(it.Text)
+			if v == "" {
+				continue
+			}
+			if hd := text(it.Head); hd != "" {
+				v = "<strong>" + hd + "</strong> " + v
+			}
+			li.WriteString("<li>" + v + "</li>")
 		}
-		s.WriteString("<li>" + v + "</li>")
+		if li.Len() > 0 {
+			s.WriteString(`<ul class="` + class + `">` + li.String() + "</ul>")
+		}
 	}
-	if len(p.Items) > 0 {
-		s.WriteString("</ul>")
+
+	switch p.Kind {
+	case "home":
+		// the hero as web/src/lib/pages/Home.svelte draws it, then the six things it does
+		s.WriteString(`<section class="hero"><div class="wrap"><div><h1 class="big">` + text("hero.h1_pre") + ` <em>` + text("hero.h1_accent") + `</em></h1>`)
+		s.WriteString(`<p class="lede">` + text(p.Lead) + `</p><div class="cta"><a class="btn btn--primary btn--lg" href="/generate">` + text("hero.cta_qr") + `</a><a class="btn btn--outline btn--lg" href="/split">` + text("hero.cta_split") + `</a></div>`)
+		s.WriteString(`<p class="proof">` + text("hero.proof") + `</p></div>`)
+		s.WriteString(`<figure class="hero-art" aria-hidden="true" style="margin:0"><img class="still lt" src="` + brandStillLight + `" alt="" width="380" height="380"><img class="still dk" src="` + brandStillDark + `" alt="" width="380" height="380"></figure></div></section>`)
+		s.WriteString(`<section class="blk"><div class="wrap">`)
+		items("hop-static-list")
+		s.WriteString(`</div></section>`)
+	case "legal":
+		s.WriteString(`<div class="wrap page legal"><div class="page-head"><h1>` + text(p.H1...) + `</h1><p>` + strings.ReplaceAll(text("legal.updated"), "{date}", legalUpdated) + `</p></div><div class="card">`)
+		for _, it := range append([]pageItem{{"", p.Lead}}, p.Items...) {
+			s.WriteString("<p>" + text(it.Text) + "</p>")
+		}
+		s.WriteString(`</div></div>`)
+	default:
+		s.WriteString(`<div class="wrap page"><div class="page-head"><h1>` + text(p.H1...) + `</h1>`)
+		if v := text(p.Lead); v != "" {
+			s.WriteString("<p>" + v + "</p>")
+		}
+		s.WriteString(`</div>`)
+		if len(p.Items) > 0 {
+			s.WriteString(`<div class="card">`)
+			if v := text(p.ListTitle); v != "" {
+				s.WriteString("<h2>" + v + "</h2>")
+			}
+			items("hop-static-facts")
+			s.WriteString(`</div>`)
+		}
+		s.WriteString(`</div>`)
 	}
-	s.WriteString("<nav><ul>")
+
+	s.WriteString(`<div class="wrap"><nav class="hop-static-links"><ul>`)
 	for _, o := range publicPages {
 		if v := text(o.Nav); v != "" && o.Path != p.Path {
 			s.WriteString(`<li><a href="` + o.Path + `">` + v + `</a></li>`)
 		}
 	}
-	s.WriteString("</ul></nav></main>")
-	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+s.String()+`</div>`), 1)
+	s.WriteString(`</ul></nav></div>`)
+	// the only sentence for readers whose browser runs no scripts: the app itself needs them
+	s.WriteString(`<noscript><div class="wrap"><p class="note">` + text("nojs.note") + `</p></div></noscript>`)
+	s.WriteString(`</main>`)
+	return s.String()
 }
 
 // appData describes the app to search engines (schema.org WebApplication). It is
