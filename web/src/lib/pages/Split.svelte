@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { i18n } from '../i18n/index.svelte';
   import en from '../i18n/en.json';
   import { build, splitBill, parseAmount, formatMinor, exponent, formats, HopPayError } from '../pay';
   import { FORMAT_BY_ID, emptyValues } from '../formats';
   import { makeQr } from '../qr';
+  import { isSample, sampleValues } from '../sample.js';
   import Icon from '../Icon.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
@@ -31,6 +33,39 @@
   let pick = $state('');
   let method = $state('paypal');
   let mvals = $state(emptyValues());
+
+  // The example bill: A, B and C share three dishes, A paid, and the method is the documented EPC sample, so the
+  // "QR per person" box shows at once. It is marked as a sample there; nothing here is ever saved.
+  const exampleOn = $derived(method === 'epc' && isSample('epc', mvals.epc));
+  function loadExample() {
+    people = ['A', 'B', 'C'].map((name) => ({ id: uid('p'), name }));
+    payerId = people[0].id;
+    items = [['Pizza', '45.00'], ['Pasta', '35.00'], ['Drinks', '20.00']].map(([name, price]) => ({ id: uid('i'), name, price, shares: [] }));
+    tax = '';
+    tip = '';
+    roundTo = '0';
+    pick = '';
+    currency = 'EUR';
+    method = 'epc';
+    mvals.epc = { ...mvals.epc, ...sampleValues('epc') };
+  }
+  function clearExample() {
+    people = [];
+    items = [];
+    payerId = '';
+    pick = '';
+    currency = 'USD';
+    mvals.epc = emptyValues().epc;
+  }
+  onMount(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.has('sample') && !people.length && !items.length) {
+      loadExample();
+      q.delete('sample');
+      const rest = q.toString();
+      history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    }
+  });
 
   const exp = $derived(exponent(currency));
   const payer = $derived(people.find((p) => p.id === payerId) ?? people[0]);
@@ -147,7 +182,10 @@
 </script>
 
 <div class="wrap page">
-  <div class="page-head"><h1>{t('split.title')}</h1><p>{t('split.sub')}</p></div>
+  <div class="page-head"><h1>{t('split.title')}</h1><p>{t('split.sub')}</p>
+    {#if !people.length && !items.length}<button type="button" class="btn btn--outline btn--sm" id="exampleBtn" style="margin-top:12px" onclick={loadExample}><Icon name="split" />{t('split.sample_btn')}</button>
+    {:else if exampleOn}<button type="button" class="btn btn--ghost btn--sm" id="exampleClear" style="margin-top:12px" onclick={clearExample}>{t('split.sample_clear')}</button>{/if}
+  </div>
   <div class="two">
     <div>
       <div class="card">
@@ -261,6 +299,7 @@
 
           {#if share}
             <div id="shareQr">
+              {#if exampleOn}<div class="sample-badge" id="sampleBadge" role="note">{t('sample.badge')}</div>{/if}
               {#if share.error}
                 <p class="note">{t('split.no_qr', { reason: share.error })}</p>
               {:else if share.out && share.qr}

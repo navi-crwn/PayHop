@@ -260,5 +260,15 @@
   "home.where_th": "タイ",
   "home.where_vn": "ベトナム",
   "home.holds_promptpay": "携帯電話番号と任意の金額を持つタイの QR",
-  "home.holds_vietqr": "銀行口座（BIN と番号）宛ての VietQR（金額は任意）"
+  "home.holds_vietqr": "銀行口座（BIN と番号）宛ての VietQR（金額は任意）",
+  "gen.sample_btn": "サンプルデータで試す",
+  "gen.sample_other": "ドキュメントに例の値があるのは EPC SEPA だけなので、サンプルはその形式に入力されます。",
+  "sample.badge": "サンプル：実在の口座ではありません。支払わないでください。",
+  "sample.clear": "サンプルを消す",
+  "sample.nosave": "これはサンプルデータです。保存はできず、履歴にも追加されません。",
+  "split.sample_btn": "サンプルの会計を読み込む",
+  "split.sample_clear": "サンプルを消す",
+  "home.sample_pre": "支払い方法がまだありませんか？",
+  "home.sample_link": "サンプルを試す。",
+  "nojs.note": "PayHop でコードを作ったり割り勘をしたりするには JavaScript が必要です。有効にしてご利用ください。"
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { i18n } from '../i18n/index.svelte';
   import en from '../i18n/en.json';
   import { build, HopPayError } from '../pay';
@@ -7,6 +8,7 @@
   import { account, signInHref } from '../account.svelte';
   import { saved, loadSaved, saveMethod, saveBill } from '../saved.svelte';
   import { methodBody, methodTitle, applyMethod, billBody, errorKey } from '../saved-model.js';
+  import { isSample, hasSample, sampleValues, FALLBACK_FORMAT } from '../sample.js';
   import Icon from '../Icon.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
@@ -30,6 +32,33 @@
   });
 
   const def = $derived(FORMAT_BY_ID[fmt]);
+
+  // Sample mode: on while the form holds a documented example value that says who gets paid (lib/sample.js).
+  // Nothing about it is stored: a reload starts empty, and a sample can be neither saved nor added to the history.
+  const sample = $derived(isSample(fmt, vals[fmt]));
+  function loadSample() {
+    const f = hasSample(fmt) ? fmt : FALLBACK_FORMAT;
+    fmt = f;
+    vals[f] = { ...vals[f], ...sampleValues(f) };
+    touched = {};
+    confirmed = false;
+    saveMsg = null;
+  }
+  function clearSample() {
+    vals[fmt] = emptyValues()[fmt];
+    touched = {};
+    confirmed = false;
+  }
+  onMount(() => {
+    // the link under the home hero: /generate?sample=1 comes up with the sample filled in
+    const q = new URLSearchParams(location.search);
+    if (q.has('sample')) {
+      loadSample();
+      q.delete('sample');
+      const rest = q.toString();
+      history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    }
+  });
 
   type Built = ReturnType<typeof build>;
   const result = $derived.by((): { ok: true; out: Built } | { ok: false; code: string; field: string | null } => {
@@ -85,7 +114,7 @@
   }
 
   async function keep(kind: 'method' | 'bill') {
-    if (!result.ok || saving) return;
+    if (!result.ok || saving || sample) return;
     saving = true;
     saveMsg = null;
     const r =
@@ -102,18 +131,19 @@
   }
 
   async function download() {
-    if (!result.ok || !confirmed) return;
+    if (!result.ok || (!confirmed && !sample)) return;
     const d = result.out.display;
     const blob = await qrPng(result.out.payload, {
       name: d.receiverName,
       amount: amountText(d),
       scheme: d.scheme,
       made: t('gen.png_made'),
-      check: t('gen.png_check')
+      check: t('gen.png_check'),
+      sample: sample ? t('sample.badge') : undefined
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `payhop-${fmt}-${slug(d.receiverName)}.png`;
+    a.download = `payhop-${sample ? 'sample-' : ''}${fmt}-${slug(d.receiverName)}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
@@ -135,6 +165,11 @@
   <div class="two">
     <div>
       <div class="card">
+        <div class="sample-row">
+          <button type="button" class="btn btn--outline btn--sm" id="sampleBtn" onclick={loadSample}><Icon name="qr" />{t('gen.sample_btn')}</button>
+          {#if sample}<button type="button" class="btn btn--ghost btn--sm" id="sampleClear" onclick={clearSample}>{t('sample.clear')}</button>{/if}
+          {#if !hasSample(fmt)}<p class="hint" id="sampleOther">{t('gen.sample_other')}</p>{/if}
+        </div>
         <div class="fmt-groups">
           {#each ['links', 'bank'] as g}
             <div class="g">
@@ -168,7 +203,9 @@
       </div>
       <div class="card" id="saveCard">
         <h2>{t('gen.save_title')}</h2>
-        {#if canSave && saved.loaded && saved.enabled}
+        {#if sample}
+          <p class="hint" style="margin:0" id="sampleNoSave">{t('sample.nosave')}</p>
+        {:else if canSave && saved.loaded && saved.enabled}
           {#if saved.methods.length}
             <div class="field field--narrow" style="margin-bottom:14px">
               <label class="lbl" for="useSaved">{t('gen.use_saved')}</label>
@@ -205,6 +242,7 @@
         {#if result.ok && qr}
           {@const d = result.out.display}
           <div class="qrcard" id="qrBox">
+            {#if sample}<div class="sample-badge" id="sampleBadge" role="note">{t('sample.badge')}</div>{/if}
             {@html qr.svg}
             <div class="cap">{d.receiverName}</div>
             {#if d.amount}<div class="cap2 num">{amountText(d)}</div>{:else}<div class="cap2">{t('gen.any_amount')}</div>{/if}
@@ -222,9 +260,9 @@
           {#if result.out.warnings.length}
             <ul class="warns">{#each result.out.warnings as w}<li>{warnText(w)}</li>{/each}</ul>
           {/if}
-          <label class="check consent"><input type="checkbox" id="confirm" bind:checked={confirmed}><span>{t('gen.confirm')}</span></label>
+          {#if !sample}<label class="check consent"><input type="checkbox" id="confirm" bind:checked={confirmed}><span>{t('gen.confirm')}</span></label>{/if}
           <div class="actions">
-            <button class="btn btn--primary" id="dl" disabled={!confirmed} onclick={download}><Icon name="down" />{t('gen.download')}</button>
+            <button class="btn btn--primary" id="dl" disabled={!confirmed && !sample} onclick={download}><Icon name="down" />{t('gen.download')}</button>
             <button class="btn btn--outline" id="cp" onclick={copy}><Icon name="copy" />{copied ? t('gen.copied') : t('gen.copy')}</button>
           </div>
           <div class="payload mono" id="payload">{result.out.payload}</div>

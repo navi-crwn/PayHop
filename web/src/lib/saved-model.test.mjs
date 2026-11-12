@@ -18,8 +18,8 @@ test('an account number is masked, never printed whole', () => {
 });
 
 test('a method keeps only the receiver fields, trimmed, and never the amount or note', () => {
-  const b = methodBody('epc', { name: ' Ana ', iban: 'DE89 3704 0044 0532 0130 00', bic: '', amount: '12.34', reference: 'rent' }, ' Rent ', true);
-  assert.deepEqual(b, { format: 'epc', label: 'Rent', values: { name: 'Ana', iban: 'DE89 3704 0044 0532 0130 00' }, consent: true });
+  const b = methodBody('epc', { name: ' Ana ', iban: 'GB82 WEST 1234 5698 7654 32', bic: '', amount: '12.34', reference: 'rent' }, ' Rent ', true);
+  assert.deepEqual(b, { format: 'epc', label: 'Rent', values: { name: 'Ana', iban: 'GB82 WEST 1234 5698 7654 32' }, consent: true });
   assert.equal(methodBody('upi', { vpa: 'a@b', note: 'x' }, '', false).consent, false);
   assert.equal(methodBody('paypal', { user: 'ana' }, undefined, undefined).consent, false, 'no consent unless it is exactly true');
   assert.throws(() => methodBody('visa', {}, '', true));

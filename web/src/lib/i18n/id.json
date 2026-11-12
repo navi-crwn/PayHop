@@ -260,5 +260,15 @@
   "home.where_th": "Thailand",
   "home.where_vn": "Vietnam",
   "home.holds_promptpay": "QR Thailand dengan nomor ponsel dan jumlah opsional",
-  "home.holds_vietqr": "VietQR ke rekening bank (BIN + nomor) dengan jumlah opsional"
+  "home.holds_vietqr": "VietQR ke rekening bank (BIN + nomor) dengan jumlah opsional",
+  "gen.sample_btn": "Coba dengan data contoh",
+  "gen.sample_other": "Hanya EPC SEPA yang punya nilai contoh terdokumentasi, jadi contoh mengisi format itu.",
+  "sample.badge": "CONTOH: bukan rekening asli. Jangan bayar.",
+  "sample.clear": "Hapus contoh",
+  "sample.nosave": "Ini data contoh. Tidak bisa disimpan dan tidak masuk ke riwayatmu.",
+  "split.sample_btn": "Muat contoh tagihan",
+  "split.sample_clear": "Hapus contoh",
+  "home.sample_pre": "Belum punya metode pembayaran?",
+  "home.sample_link": "Coba contoh.",
+  "nojs.note": "PayHop butuh JavaScript untuk membuat kode atau membagi tagihan; aktifkan untuk memakai aplikasi."
 }

@@ -260,5 +260,15 @@
   "home.where_th": "Thailand",
   "home.where_vn": "Vietnam",
   "home.holds_promptpay": "A Thai QR with a mobile number and optional amount",
-  "home.holds_vietqr": "A VietQR to a bank account (BIN + number) with optional amount"
+  "home.holds_vietqr": "A VietQR to a bank account (BIN + number) with optional amount",
+  "gen.sample_btn": "Try with sample data",
+  "gen.sample_other": "Only EPC SEPA has a documented example value, so the sample fills that format.",
+  "sample.badge": "SAMPLE: not a real account. Do not pay.",
+  "sample.clear": "Clear the sample",
+  "sample.nosave": "This is sample data. It cannot be saved and is not added to your history.",
+  "split.sample_btn": "Load an example bill",
+  "split.sample_clear": "Clear the example",
+  "home.sample_pre": "No payment method yet?",
+  "home.sample_link": "Try a sample.",
+  "nojs.note": "PayHop needs JavaScript to make a code or split a bill; turn it on to use the app."
 }

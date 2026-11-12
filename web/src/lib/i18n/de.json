@@ -260,5 +260,15 @@
   "home.where_th": "Thailand",
   "home.where_vn": "Vietnam",
   "home.holds_promptpay": "Ein thailändischer QR-Code mit Mobilnummer und optionalem Betrag",
-  "home.holds_vietqr": "Ein VietQR auf ein Bankkonto (BIN + Nummer) mit optionalem Betrag"
+  "home.holds_vietqr": "Ein VietQR auf ein Bankkonto (BIN + Nummer) mit optionalem Betrag",
+  "gen.sample_btn": "Mit Beispieldaten ausprobieren",
+  "gen.sample_other": "Nur EPC SEPA hat einen dokumentierten Beispielwert, deshalb füllt das Beispiel dieses Format.",
+  "sample.badge": "BEISPIEL: kein echtes Konto. Nicht bezahlen.",
+  "sample.clear": "Beispiel entfernen",
+  "sample.nosave": "Das sind Beispieldaten. Sie lassen sich nicht speichern und landen nicht in deinem Verlauf.",
+  "split.sample_btn": "Beispielrechnung laden",
+  "split.sample_clear": "Beispiel entfernen",
+  "home.sample_pre": "Noch keine Zahlungsmethode?",
+  "home.sample_link": "Probiere ein Beispiel.",
+  "nojs.note": "PayHop braucht JavaScript, um einen Code zu erstellen oder eine Rechnung zu teilen; schalte es ein, um die App zu nutzen."
 }
