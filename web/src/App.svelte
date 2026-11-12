@@ -67,10 +67,19 @@
     } else robots?.remove();
   });
 
+  // the title and description the server sends for each public page (internal/app/pages.go), in the reader's language
+  const PAGE_HEAD: Record<string, [string, string]> = {
+    '/generate': ['gen.title', 'gen.sub'],
+    '/split': ['split.title', 'split.sub'],
+    '/changelog': ['cl.title', 'cl.sub'],
+    '/terms': ['terms.t', 'terms.p1'],
+    '/privacy': ['priv.t', 'priv.p1']
+  };
   $effect(() => {
+    const head = PAGE_HEAD[route.path];
     void i18n.load(locale).then(() => {
-      document.title = t('app.title');
-      document.querySelector('meta[name="description"]')?.setAttribute('content', t('app.desc'));
+      document.title = head ? t(head[0]) + ' — ' + BRAND.name : t('app.title');
+      document.querySelector('meta[name="description"]')?.setAttribute('content', t(head ? head[1] : 'app.desc'));
     });
   });
 
