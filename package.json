@@ -11,5 +11,8 @@
     "test": "node tools/run-tests.mjs",
     "lint:i18n": "node tools/check-i18n.mjs",
     "changelog": "python3 scripts/build-changelog.py --repo PayHop"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
   }
 }
