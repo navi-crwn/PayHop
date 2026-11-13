@@ -87,7 +87,8 @@ func (a *App) Handler() http.Handler {
 	})
 
 	// Everything else is the browser app: every route without a file extension
-	// (/generate, /split, /account, /changelog) gets the app shell.
+	// (/generate, /split, /account, /changelog) gets the app shell; an address
+	// the app does not own gets the shell with a 404 status (serveStatic).
 	m.HandleFunc("/", a.serveStatic)
 	return secure(m)
 }
@@ -121,13 +122,18 @@ func (a *App) serveStatic(w http.ResponseWriter, r *http.Request) {
 	setAppHeaders(h)
 
 	if name == "" || name == "index.html" || !strings.Contains(path.Base(name), ".") {
-		// The shell, for / and for app routes such as /send.
+		// The shell, for / and for app routes such as /send; an address the app
+		// does not own gets the shell with a 404 status (shell).
 		if st, err := fs.Stat(a.static, name); name != "" && name != "index.html" && err == nil && !st.IsDir() {
 			// a real file without an extension: fall through to it
 		} else {
 			h.Set("Content-Type", "text/html; charset=utf-8")
 			h.Set("Cache-Control", "no-cache")
-			w.Write(a.shell(name, h))
+			body, status := a.shell(name, h)
+			if status != http.StatusOK {
+				w.WriteHeader(status)
+			}
+			w.Write(body)
 			return
 		}
 	}

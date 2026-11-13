@@ -16,6 +16,8 @@ test('sitemap.xml lists every public route once, and not /account', () => {
   const want = routes.filter((r) => r !== '/account').map((r) => 'https://pay.hel.ink' + (r === '/' ? '/' : r));
   assert.deepEqual([...locs].sort(), [...want].sort());
   assert.equal(new Set(locs).size, locs.length);
+  // pages.go answers every other extension-less address with a real 404; only ROUTES stays 200
+  assert.ok(routes.includes('/account'), '/account stays a route of the app: pages.go serves it the bare shell with a 200');
 });
 
 test('robots.txt points at the sitemap and keeps crawlers out of private paths', () => {

@@ -82,6 +82,18 @@ var publicPages = []publicPage{
 // privatePrefixes are never for a search index; robots.txt keeps crawlers out of them too.
 var privatePrefixes = []string{"/api/", "/auth/", "/hop/", "/account"}
 
+// appRoutes are the extension-less addresses the browser app owns: the public
+// pages above plus "/" and the private "/account" — exactly the ROUTES of
+// web/src/lib/router.svelte.ts. Any other extension-less address is not part of
+// the app and is answered with a real 404 (see shell).
+var appRoutes = func() map[string]bool {
+	m := map[string]bool{"/": true, "/account": true}
+	for _, p := range publicPages {
+		m[p.Path] = true
+	}
+	return m
+}()
+
 const appCategory = "FinanceApplication"
 
 const pageMount = `<div id="root"></div>`
@@ -255,20 +267,26 @@ func appData(page []byte, origin string) string {
 	return `<script type="application/ld+json">` + string(js) + `</script>`
 }
 
-// shell is the HTML of an app route: a public one as built above, any other
-// path the bare shell, marked so it is not indexed as a copy of the home page.
-func (a *App) shell(name string, h http.Header) []byte {
+// shell is the HTML of an app route and the status it is served with: a public
+// one as built above, "/" and "/account" as the bare shell, both 200. Any other
+// address is not a route of the app: it gets the bare shell with a real 404, so
+// crawlers and caches see the truth while the app still mounts and draws its
+// own not-found view. The shell is marked so it is not indexed as a copy of the
+// home page.
+func (a *App) shell(name string, h http.Header) ([]byte, int) {
 	route := "/" + name
-	if name == "index.html" {
+	if name == "" || name == "index.html" {
 		route = "/"
 	}
 	if p, ok := a.pages[route]; ok {
-		return p
+		return p, http.StatusOK
 	}
-	if route != "/" {
-		h.Set("X-Robots-Tag", "noindex")
+	if appRoutes[route] {
+		// / and /account, and every app route when index.html states no site address
+		return a.index, http.StatusOK
 	}
-	return a.index
+	h.Set("X-Robots-Tag", "noindex")
+	return a.index, http.StatusNotFound
 }
 
 func privatePath(p string) bool {

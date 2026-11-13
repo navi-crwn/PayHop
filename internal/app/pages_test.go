@@ -144,14 +144,62 @@ func TestFirstViewIsVisibleAndSaysWhatTheAppSays(t *testing.T) {
 
 func TestUnknownRouteGetsTheBareShell(t *testing.T) {
 	srv := builtApp(t)
-	for _, path := range []string{"/no-such-page", "/account", "/generate/extra"} {
-		h, body := fetchPage(t, srv.URL+path)
+	for _, tc := range []struct {
+		path   string
+		status int
+	}{
+		{"/no-such-page", 404}, {"/generate/extra", 404}, // an address the app does not own: a real 404
+		{"/account", 200}, // the private app route: the shell, served normally
+	} {
+		res, err := noRedirect().Get(srv.URL + tc.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		body := string(b)
+		if res.StatusCode != tc.status {
+			t.Errorf("%s: status %d, want %d", tc.path, res.StatusCode, tc.status)
+		}
 		if !strings.Contains(body, `<div id="root"></div>`) || strings.Contains(body, "hop-static") {
-			t.Errorf("%s: should be the bare shell", path)
+			t.Errorf("%s: should be the bare shell", tc.path)
 		}
-		if h.Get("X-Robots-Tag") != "noindex" {
-			t.Errorf("%s: X-Robots-Tag %q", path, h.Get("X-Robots-Tag"))
+		if h := res.Header; h.Get("X-Robots-Tag") != "noindex" {
+			t.Errorf("%s: X-Robots-Tag %q", tc.path, h.Get("X-Robots-Tag"))
 		}
+	}
+}
+
+// An invented address must not look like a page (a soft 404): the status says
+// 404, while every address the app owns — the public pages, /account, the
+// service worker — keeps answering 200.
+func TestUnknownAddressIsARealNotFoundAndOwnedAddressesStay200(t *testing.T) {
+	srv := builtApp(t)
+	status := func(path string) (int, http.Header) {
+		t.Helper()
+		res, err := noRedirect().Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		return res.StatusCode, res.Header
+	}
+	for _, path := range []string{"/tidak-ada-xyz", "/alamat/karangan", "/generate/extra"} {
+		if code, _ := status(path); code != 404 {
+			t.Errorf("%s: status %d, want 404", path, code)
+		}
+	}
+	for _, path := range []string{"/", "/generate", "/split", "/changelog", "/terms", "/privacy", "/account"} {
+		if code, _ := status(path); code != 200 {
+			t.Errorf("%s: status %d, want 200", path, code)
+		}
+	}
+	code, h := status("/sw.js")
+	if code != 200 {
+		t.Errorf("/sw.js: status %d, want 200", code)
+	}
+	if ct := h.Get("Content-Type"); !strings.HasPrefix(ct, "text/javascript") {
+		t.Errorf("/sw.js: Content-Type %q, want text/javascript", ct)
 	}
 }
 
