@@ -5,6 +5,15 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-11-14
+
+### Fixed
+- An address the app does not own now answers with a real 404 instead of the app shell; the addresses it owns still answer 200.
+
+### Changed
+- `npm test` resolves its root with `fileURLToPath`, so it runs on Windows.
+- CI loads the built app in a real browser (`tools/smoke.mjs`) and fails on a console error, a failed request, a blank page or an app that never mounts. Tests also keep the public pages byte-equal for every visitor language, which is why they need no `Vary: Cookie`.
+
 ## [0.0.3] - 2026-11-12
 
 ### Added
@@ -47,7 +56,8 @@ The first release: payment QR codes and split bills in the browser, accounts tha
 ### Not yet
 - QRIS, Pix and other bank-QR schemes; pasting someone else's QR (needs real sample codes and wallet tests).
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.4...HEAD
+[0.0.4]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/navi-crwn/PayHop/releases/tag/v0.0.1

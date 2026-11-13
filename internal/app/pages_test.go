@@ -144,14 +144,62 @@ func TestFirstViewIsVisibleAndSaysWhatTheAppSays(t *testing.T) {
 
 func TestUnknownRouteGetsTheBareShell(t *testing.T) {
 	srv := builtApp(t)
-	for _, path := range []string{"/no-such-page", "/account", "/generate/extra"} {
-		h, body := fetchPage(t, srv.URL+path)
+	for _, tc := range []struct {
+		path   string
+		status int
+	}{
+		{"/no-such-page", 404}, {"/generate/extra", 404}, // an address the app does not own: a real 404
+		{"/account", 200}, // the private app route: the shell, served normally
+	} {
+		res, err := noRedirect().Get(srv.URL + tc.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		body := string(b)
+		if res.StatusCode != tc.status {
+			t.Errorf("%s: status %d, want %d", tc.path, res.StatusCode, tc.status)
+		}
 		if !strings.Contains(body, `<div id="root"></div>`) || strings.Contains(body, "hop-static") {
-			t.Errorf("%s: should be the bare shell", path)
+			t.Errorf("%s: should be the bare shell", tc.path)
 		}
-		if h.Get("X-Robots-Tag") != "noindex" {
-			t.Errorf("%s: X-Robots-Tag %q", path, h.Get("X-Robots-Tag"))
+		if h := res.Header; h.Get("X-Robots-Tag") != "noindex" {
+			t.Errorf("%s: X-Robots-Tag %q", tc.path, h.Get("X-Robots-Tag"))
 		}
+	}
+}
+
+// An invented address must not look like a page (a soft 404): the status says
+// 404, while every address the app owns — the public pages, /account, the
+// service worker — keeps answering 200.
+func TestUnknownAddressIsARealNotFoundAndOwnedAddressesStay200(t *testing.T) {
+	srv := builtApp(t)
+	status := func(path string) (int, http.Header) {
+		t.Helper()
+		res, err := noRedirect().Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		return res.StatusCode, res.Header
+	}
+	for _, path := range []string{"/tidak-ada-xyz", "/alamat/karangan", "/generate/extra"} {
+		if code, _ := status(path); code != 404 {
+			t.Errorf("%s: status %d, want 404", path, code)
+		}
+	}
+	for _, path := range []string{"/", "/generate", "/split", "/changelog", "/terms", "/privacy", "/account"} {
+		if code, _ := status(path); code != 200 {
+			t.Errorf("%s: status %d, want 200", path, code)
+		}
+	}
+	code, h := status("/sw.js")
+	if code != 200 {
+		t.Errorf("/sw.js: status %d, want 200", code)
+	}
+	if ct := h.Get("Content-Type"); !strings.HasPrefix(ct, "text/javascript") {
+		t.Errorf("/sw.js: Content-Type %q, want text/javascript", ct)
 	}
 }
 
@@ -258,6 +306,58 @@ func TestSitemapListsEveryPublicPageAndNothingElse(t *testing.T) {
 	for _, pre := range privatePrefixes {
 		if !regexp.MustCompile(`(?m)^Disallow: ` + regexp.QuoteMeta(pre) + `$`).Match(robots) {
 			t.Errorf("robots.txt does not keep crawlers out of %s", pre)
+		}
+	}
+}
+
+// The server writes the first view in English for every visitor; the app picks the language
+// in the browser. That is what lets these pages be answered with Cache-Control: no-cache and
+// no Vary: Cookie (KONTRAK-SEO-BAHASA rule 6.5). If a page ever follows the cookie, the
+// Accept-Language header or ?lang=, this test fails and the page needs Vary: Cookie (rule 6.2).
+func TestPublicPagesDoNotFollowTheVisitorsLanguage(t *testing.T) {
+	srv := builtApp(t)
+	get := func(path, cookie, accept string) (http.Header, string) {
+		t.Helper()
+		req, err := http.NewRequest("GET", srv.URL+path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cookie != "" {
+			req.Header.Set("Cookie", cookie)
+		}
+		if accept != "" {
+			req.Header.Set("Accept-Language", accept)
+		}
+		res, err := noRedirect().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		b, _ := io.ReadAll(res.Body)
+		return res.Header, string(b)
+	}
+	for _, p := range []string{"/", "/generate", "/split", "/changelog", "/terms", "/privacy"} {
+		h, plain := get(p, "", "")
+		if cc := h.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
+			t.Errorf("%s: Cache-Control = %q, want no-cache", p, cc)
+		}
+		if plain == "" {
+			t.Errorf("%s: empty body", p)
+		}
+		variants := map[string][3]string{
+			"Cookie hop_lang=id":    {p, "hop_lang=id", ""},
+			"Accept-Language: id":   {p, "", "id"},
+			"?lang=id":              {p + "?lang=id", "", ""},
+			"cookie, header, query": {p + "?lang=id", "hop_lang=id", "id"},
+		}
+		for name, v := range variants {
+			h2, body := get(v[0], v[1], v[2])
+			if body != plain {
+				t.Errorf("%s with %s: the body differs from the plain request", p, name)
+			}
+			if cc := h2.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
+				t.Errorf("%s with %s: Cache-Control = %q, want no-cache", p, name, cc)
+			}
 		}
 	}
 }

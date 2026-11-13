@@ -3,8 +3,10 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+// fileURLToPath, not .pathname: on Windows the pathname of a file: URL is "/C:/...", which no filesystem call accepts.
+const root = fileURLToPath(new URL('..', import.meta.url));
 const files = [];
 const walk = (d) => {
   for (const n of readdirSync(d)) {
