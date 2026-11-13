@@ -4,6 +4,7 @@
   import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly, signInHref } from './lib/account.svelte';
   import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
+  import { readTheme as readThemePref, saveTheme, saveLang, browserCtx } from './lib/prefs.js';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
@@ -29,11 +30,7 @@
   let toastTimer: number | undefined;
 
   function readTheme(): 'dark' | 'light' {
-    try {
-      const v = localStorage.getItem('hop-theme');
-      if (v === 'light' || v === 'dark') return v;
-    } catch { /* ignore */ }
-    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return readThemePref({ ...browserCtx(), prefersDark: matchMedia('(prefers-color-scheme: dark)').matches }) as 'dark' | 'light';
   }
   // optional Clean style: one cookie on .hel.ink, so the choice holds in every HOP app
   let ui = $state<'hop' | 'clean'>(document.documentElement.dataset.ui === 'clean' ? 'clean' : 'hop');
@@ -46,7 +43,7 @@
   }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('hop-theme', theme); } catch { /* ignore */ }
+    saveTheme(browserCtx(), theme);
   }
   $effect(() => {
     document.documentElement.dataset.theme = theme;
@@ -67,10 +64,19 @@
     } else robots?.remove();
   });
 
+  // the title and description the server sends for each public page (internal/app/pages.go), in the reader's language
+  const PAGE_HEAD: Record<string, [string, string]> = {
+    '/generate': ['gen.title', 'gen.sub'],
+    '/split': ['split.title', 'split.sub'],
+    '/changelog': ['cl.title', 'cl.sub'],
+    '/terms': ['terms.t', 'terms.p1'],
+    '/privacy': ['priv.t', 'priv.p1']
+  };
   $effect(() => {
+    const head = PAGE_HEAD[route.path];
     void i18n.load(locale).then(() => {
-      document.title = t('app.title');
-      document.querySelector('meta[name="description"]')?.setAttribute('content', t('app.desc'));
+      document.title = head ? t(head[0]) + ' — ' + BRAND.name : t('app.title');
+      document.querySelector('meta[name="description"]')?.setAttribute('content', t(head ? head[1] : 'app.desc'));
     });
   });
 
@@ -173,7 +179,7 @@
     {#if langOpen}
       <div class="menu-pop" id="langPop" role="listbox" aria-label={t('top.language')} tabindex="-1" bind:this={langList} onkeydown={onLangKey}>
         {#each LOCALES as l}
-          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
+          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
         {/each}
       </div>
     {/if}

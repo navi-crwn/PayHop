@@ -79,6 +79,7 @@
       <a class="btn btn--outline btn--lg" href="/split"><Icon name="split" />{t('hero.cta_split')}</a>
     </div>
     <p class="proof"><Icon name="shield" />{t('hero.proof')}</p>
+    <p class="sample-line" id="sampleLine">{t('home.sample_pre')} <a href="/generate?sample=1">{t('home.sample_link')}</a></p>
   </div>
   <figure class="hero-art" aria-hidden="true" style="margin:0">
     <img class="still lt" src={BRAND.still.light} alt="" width="380" height="380"><img class="still dk" src={BRAND.still.dark} alt="" width="380" height="380">

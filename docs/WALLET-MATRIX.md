@@ -36,3 +36,11 @@ scope until real sample codes exist).
 2. Scan it with the real wallet app and complete or cancel at the confirmation screen; note the wallet, its version,
    the country and the date.
 3. Record it here, then change that format's `tested` flag and the label in the app in one pull request.
+
+## Sample data is not a wallet fixture
+
+`web/src/lib/sample.js` holds the values behind "Try with sample data". They exist so that a visitor without a payment
+method can see what the app makes. They are marked "SAMPLE: not a real account. Do not pay." on screen and in the PNG,
+cannot be saved, and prove nothing about any wallet. Only EPC SEPA has one (the IBAN registry's example for Germany);
+a format gets a sample only when its own documentation gives an example value that belongs to nobody. No merchant code
+is used anywhere.

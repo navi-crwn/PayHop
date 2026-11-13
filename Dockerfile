@@ -17,6 +17,7 @@ RUN go mod download
 COPY cmd cmd
 COPY internal internal
 COPY web/embed.go web/changelog.json web/
+COPY web/src/lib/i18n/en.json web/src/lib/i18n/
 COPY --from=web /src/web/dist web/dist
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /payhop ./cmd/payhop
 

@@ -15,7 +15,6 @@ import (
 	"log"
 	"net/http"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -42,7 +41,7 @@ type App struct {
 	db      *db.DB
 	static  fs.FS
 	index   []byte
-	pages   map[string][]byte // the shell with its own canonical link, for the public routes
+	pages   map[string][]byte // the shell as each public route is served (pages.go)
 	used    usedTickets
 	nonces  hop.Nonces
 	started time.Time
@@ -55,7 +54,7 @@ func New(cfg Config, d *db.DB, static fs.FS) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{cfg: cfg, db: d, static: static, index: index, pages: canonicalPages(index), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
+	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, englishStrings()), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
 	a.hubUp = newHubProbe(cfg.SSOURL).Up
 	return a, nil
 }
@@ -128,11 +127,7 @@ func (a *App) serveStatic(w http.ResponseWriter, r *http.Request) {
 		} else {
 			h.Set("Content-Type", "text/html; charset=utf-8")
 			h.Set("Cache-Control", "no-cache")
-			if p, ok := a.pages["/"+name]; ok {
-				w.Write(p) // crawlers that do not run scripts see the right canonical address
-				return
-			}
-			w.Write(a.index)
+			w.Write(a.shell(name, h))
 			return
 		}
 	}
@@ -173,6 +168,9 @@ func secure(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 		h.Set("X-Frame-Options", "DENY")
+		if privatePath(r.URL.Path) {
+			h.Set("X-Robots-Tag", "noindex")
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -197,21 +195,4 @@ func randToken(n int) string {
 func hashHex(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:])
-}
-
-var canonicalRe = regexp.MustCompile(`<link rel="canonical" href="(https?://[^/"]+)/">`)
-
-// publicRoutes are the pages in sitemap.xml; each gets its own canonical link in the HTML it is served with.
-var publicRoutes = []string{"/generate", "/split", "/changelog", "/terms", "/privacy"}
-
-func canonicalPages(index []byte) map[string][]byte {
-	m := canonicalRe.FindSubmatch(index)
-	if m == nil {
-		return nil
-	}
-	out := map[string][]byte{}
-	for _, r := range publicRoutes {
-		out[r] = canonicalRe.ReplaceAll(index, []byte(`<link rel="canonical" href="`+string(m[1])+r+`">`))
-	}
-	return out
 }

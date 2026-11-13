@@ -2,6 +2,8 @@
    method, how a method is shown without printing the whole account number, and how a server error
    code becomes a message key. Used by lib/saved.svelte.ts and the pages; tested in saved-model.test.mjs. */
 
+import { isSample, SAMPLE_NAME } from './sample.js';
+
 export const MAX_METHODS = 20;
 export const KEEP_BILLS = 200;
 
@@ -37,6 +39,7 @@ export function maskId(value) {
 export function methodBody(format, values, label, consent) {
   const keys = METHOD_KEYS[format];
   if (!keys) throw new Error('unknown format');
+  if (isSample(format, values)) throw new Error('sample'); // sample data is never saved
   const kept = {};
   for (const k of keys) {
     const v = String(values?.[k] ?? '').trim();
@@ -61,6 +64,7 @@ export function applyMethod(current, m) {
 
 /** The request body for "save this bill to my history", from what the generator shows. */
 export function billBody(format, display, payload, consent) {
+  if (display?.receiverName === SAMPLE_NAME) throw new Error('sample'); // sample data never reaches the history
   return {
     format,
     receiver: String(display?.receiverName ?? ''),

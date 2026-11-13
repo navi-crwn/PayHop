@@ -17,6 +17,12 @@ var dist embed.FS
 //go:embed changelog.json
 var Changelog []byte
 
+// English is the app's English dictionary: the server takes from it the words of
+// the page summaries it sends to readers without scripts (internal/app/pages.go).
+//
+//go:embed src/lib/i18n/en.json
+var English []byte
+
 // Dist is the content of web/dist, rooted so index.html is at "index.html".
 func Dist() fs.FS {
 	sub, err := fs.Sub(dist, "dist")

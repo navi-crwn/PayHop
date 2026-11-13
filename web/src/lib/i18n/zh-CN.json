@@ -260,5 +260,19 @@
   "home.where_th": "泰国",
   "home.where_vn": "越南",
   "home.holds_promptpay": "含手机号码和可选金额的泰国二维码",
-  "home.holds_vietqr": "转到银行账户（BIN + 账号）的 VietQR，金额可选"
+  "home.holds_vietqr": "转到银行账户（BIN + 账号）的 VietQR，金额可选",
+  "gen.sample_btn": "使用示例数据试试",
+  "gen.sample_other": "只有 EPC SEPA 有文档公开的示例值，因此示例会填入该格式。",
+  "sample.badge": "示例：并非真实账户。请勿付款。",
+  "sample.clear": "清除示例",
+  "sample.nosave": "这是示例数据，无法保存，也不会加入你的历史记录。",
+  "split.sample_btn": "载入示例账单",
+  "split.sample_clear": "清除示例",
+  "home.sample_pre": "还没有支付方式？",
+  "home.sample_link": "试试示例。",
+  "nojs.note": "PayHop 需要 JavaScript 才能生成二维码或分摊账单；请开启 JavaScript 后使用。",
+  "split.sample_item1": "披萨",
+  "split.sample_item2": "意面",
+  "split.sample_item3": "饮料",
+  "sample.unpayable": "此示例码无法用于付款：银行应用会有意拒绝它。"
 }

@@ -260,5 +260,19 @@
   "home.where_th": "Tailandia",
   "home.where_vn": "Vietnam",
   "home.holds_promptpay": "Un QR tailandés con número de móvil e importe opcional",
-  "home.holds_vietqr": "Un VietQR a una cuenta bancaria (BIN + número) con importe opcional"
+  "home.holds_vietqr": "Un VietQR a una cuenta bancaria (BIN + número) con importe opcional",
+  "gen.sample_btn": "Probar con datos de ejemplo",
+  "gen.sample_other": "Solo EPC SEPA tiene un valor de ejemplo documentado, así que el ejemplo rellena ese formato.",
+  "sample.badge": "EJEMPLO: no es una cuenta real. No pagues.",
+  "sample.clear": "Borrar el ejemplo",
+  "sample.nosave": "Son datos de ejemplo. No se pueden guardar ni se añaden a tu historial.",
+  "split.sample_btn": "Cargar una cuenta de ejemplo",
+  "split.sample_clear": "Borrar el ejemplo",
+  "home.sample_pre": "¿Aún sin método de pago?",
+  "home.sample_link": "Prueba un ejemplo.",
+  "nojs.note": "PayHop necesita JavaScript para crear un código o dividir una cuenta; actívalo para usar la app.",
+  "split.sample_item1": "Pizza",
+  "split.sample_item2": "Pasta",
+  "split.sample_item3": "Bebidas",
+  "sample.unpayable": "Este código de ejemplo no se puede pagar: las apps bancarias lo rechazan a propósito."
 }

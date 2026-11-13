@@ -5,6 +5,16 @@ What changed in PayHop, newest first. The `/changelog` page shows the repository
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-11-12
+
+### Added
+- A visitor with no payment method can try the app: "Try with sample data" on `/generate`, "Load an example bill" on `/split`, and a line under the home hero (`/generate?sample=1`). A sample is marked "SAMPLE: not a real account. Do not pay." on the QR card and printed in a band at the top of the downloaded PNG; the receiver is "DEMO: do not pay". The code a sample draws, the text under it, the copied text and the PNG are not payable on purpose: the EPC service tag line is replaced, so banking apps refuse it, while the form values still pass the format's own checks. A sample cannot be saved as a method or a bill and is never added to the history. Only EPC SEPA has one (the IBAN registry's own example for Germany); the other formats name a person's handle, number or account and their documentation gives none that belongs to nobody, so they have no sample. The example bill's dish names and every new string are in all nine languages; tests that every sample passes `build()`, that a sample payload is never the EPC payload, and that a sample PNG carries the marker whole in every language.
+- Theme and language are kept in the family cookies `hop_theme` and `hop_lang` (on `.hel.ink`, host-only elsewhere), read before first paint. The old theme key (`hop-theme`) is moved into the theme cookie once; the old language key (`hop-lang`) is still read and kept up to date, but is not copied into `hop_lang` until the reader picks a language.
+
+### Changed
+- The summary the server writes into every public page is now the page's visible first view (same top bar, heading, fonts and theme as the app, light and dark), not a hidden block; readers without scripts get one sentence saying the app needs JavaScript. The app replaces it on mount without a visible jump. Tests keep the title table in `App.svelte` and the one in `internal/app/pages.go` equal.
+- The language is written only when the reader picks one, no longer on every page load.
+
 ## [0.0.2] - 2026-11-12
 
 ### Changed
@@ -37,6 +47,7 @@ The first release: payment QR codes and split bills in the browser, accounts tha
 ### Not yet
 - QRIS, Pix and other bank-QR schemes; pasting someone else's QR (needs real sample codes and wallet tests).
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/navi-crwn/PayHop/releases/tag/v0.0.1
