@@ -309,3 +309,55 @@ func TestSitemapListsEveryPublicPageAndNothingElse(t *testing.T) {
 		}
 	}
 }
+
+// The server writes the first view in English for every visitor; the app picks the language
+// in the browser. That is what lets these pages be answered with Cache-Control: no-cache and
+// no Vary: Cookie (KONTRAK-SEO-BAHASA rule 6.5). If a page ever follows the cookie, the
+// Accept-Language header or ?lang=, this test fails and the page needs Vary: Cookie (rule 6.2).
+func TestPublicPagesDoNotFollowTheVisitorsLanguage(t *testing.T) {
+	srv := builtApp(t)
+	get := func(path, cookie, accept string) (http.Header, string) {
+		t.Helper()
+		req, err := http.NewRequest("GET", srv.URL+path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cookie != "" {
+			req.Header.Set("Cookie", cookie)
+		}
+		if accept != "" {
+			req.Header.Set("Accept-Language", accept)
+		}
+		res, err := noRedirect().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		b, _ := io.ReadAll(res.Body)
+		return res.Header, string(b)
+	}
+	for _, p := range []string{"/", "/generate", "/split", "/changelog", "/terms", "/privacy"} {
+		h, plain := get(p, "", "")
+		if cc := h.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
+			t.Errorf("%s: Cache-Control = %q, want no-cache", p, cc)
+		}
+		if plain == "" {
+			t.Errorf("%s: empty body", p)
+		}
+		variants := map[string][3]string{
+			"Cookie hop_lang=id":    {p, "hop_lang=id", ""},
+			"Accept-Language: id":   {p, "", "id"},
+			"?lang=id":              {p + "?lang=id", "", ""},
+			"cookie, header, query": {p + "?lang=id", "hop_lang=id", "id"},
+		}
+		for name, v := range variants {
+			h2, body := get(v[0], v[1], v[2])
+			if body != plain {
+				t.Errorf("%s with %s: the body differs from the plain request", p, name)
+			}
+			if cc := h2.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
+				t.Errorf("%s with %s: Cache-Control = %q, want no-cache", p, name, cc)
+			}
+		}
+	}
+}
