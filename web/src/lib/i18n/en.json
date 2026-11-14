@@ -15,6 +15,8 @@
   "top.hub": "HOP ID dashboard",
   "side.menu": "Menu",
   "side.family": "HOP family",
+  "announce.title": "Announcement",
+  "announce.close": "Close announcement",
   "ft.part": "Part of",
   "ft.tagline": "Payment QR codes and split bills, made in your browser.",
   "ft.support": "Support",

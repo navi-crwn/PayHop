@@ -8,7 +8,7 @@ import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../web', import.meta.url));
-let server, render, Dashboard, Generate, Legal, FamilySwitcher, saved, account;
+let server, render, Dashboard, Generate, Legal, FamilySwitcher, Announcement, saved, account;
 
 before(async () => {
   server = await createServer({ root, configFile: false, plugins: [(await import('@sveltejs/vite-plugin-svelte')).svelte()], server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent', optimizeDeps: { noDiscovery: true } });
@@ -16,6 +16,7 @@ before(async () => {
   Dashboard = (await server.ssrLoadModule('/src/lib/pages/Dashboard.svelte')).default;
   Generate = (await server.ssrLoadModule('/src/lib/pages/Generate.svelte')).default;
   Legal = (await server.ssrLoadModule('/src/lib/pages/Legal.svelte')).default;
+  Announcement = (await server.ssrLoadModule('/src/lib/Announcement.svelte')).default;
   FamilySwitcher = (await server.ssrLoadModule('/src/lib/FamilySwitcher.svelte')).default;
   ({ saved } = await server.ssrLoadModule('/src/lib/saved.svelte.ts'));
   ({ account } = await server.ssrLoadModule('/src/lib/account.svelte.ts'));
@@ -146,4 +147,16 @@ test('family picker (public top bar): HOP ID first, every other public app, neve
   const member = html(FamilySwitcher);
   assert.ok(member.includes('href="https://hub.example.test/dashboard"'));
   assert.ok(member.includes('href="https://hub.example.test/apps/linkhop"'));
+});
+
+test('announcement card: one sample entry draws the card with a labelled close button and its link; the dashboard has none by default', () => {
+  reset();
+  const h = html(Announcement, { items: [{ id: 'sample', text: { en: 'Planned maintenance on Sunday.' }, href: 'https://hel.ink/status', link: { en: 'Details' } }] });
+  assert.match(h, /id="announce"/);
+  assert.ok(h.includes(">Announcement</b>"));
+  assert.ok(h.includes("Planned maintenance on Sunday."));
+  assert.match(h, /aria-label="Close announcement"/);
+  assert.ok(h.includes('href="https://hel.ink/status"'));
+  assert.doesNotMatch(html(Announcement, { items: [] }), /announce/);
+  assert.doesNotMatch(html(Dashboard), /id="announce"/);
 });

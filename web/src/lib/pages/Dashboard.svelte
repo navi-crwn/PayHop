@@ -5,6 +5,7 @@
   import { saved, loadSaved, deleteMethod, deleteBill, deleteEverything } from '../saved.svelte';
   import { methodTitle, FORMAT_NAMES, maskId, ID_KEY } from '../saved-model.js';
   import Icon from '../Icon.svelte';
+  import Announcement from '../Announcement.svelte';
 
   const t = (k: string, v?: Record<string, string | number>) => i18n.t(k, v);
 
@@ -43,6 +44,7 @@
 </script>
 
 <div class="wrap page">
+  <Announcement />
   <div class="page-head"><h1>{t('dash.welcome', { name: account.name || account.email })}</h1><p>{t('dash.sub')}</p></div>
   <div class="qa">
     <a href="/generate"><Icon name="qr" /><b>{t('nav.generate')}</b><span>{t('gen.sub')}</span></a>
