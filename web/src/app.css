@@ -85,6 +85,15 @@ h1, h2, h3, p { margin: 0; }
 .menu-pop .code { font: 12px var(--mono); color: var(--muted); }
 .ico { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
+/* family picker in the public top bar (the dashboard has the HOP family list in its sidebar) */
+.family-switcher { position: relative; flex: none; }
+.family-switcher > summary { list-style: none; cursor: pointer; }
+.family-switcher > summary::-webkit-details-marker { display: none; }
+.family-switcher nav { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 30; width: 260px; padding: 8px; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+.family-switcher nav a { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; }
+.family-switcher nav a:hover, .family-switcher nav a:focus-visible { background: var(--panel2); }
+.family-switcher nav img { width: 28px; height: 28px; object-fit: contain; flex: none; image-rendering: pixelated; }
+
 /* ---------- home: hero ---------- */
 .hero { padding: 72px 0 56px; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 56px; align-items: center; }
@@ -440,3 +449,14 @@ dialog.confirm .actions { justify-content: flex-end; }
   :root:not([data-theme]) .hero-art .dk { display: block; }
 }
 #shareQr .sample-badge { margin-top: 14px; }
+
+/* phones: one top-bar row that always fits. The family panel spans the screen under the bar (the bar is the
+   positioned ancestor, so the picker itself must not be one), and the language button shows only its globe. */
+@media (max-width: 640px) {
+  .family-switcher { position: static; }
+  .family-switcher nav { inset-inline: 12px; top: calc(100% + 6px); width: auto; }
+}
+@media (max-width: 480px) {
+  #langBtn { width: 32px; padding: 0; }
+  #langBtn span { display: none; }
+}

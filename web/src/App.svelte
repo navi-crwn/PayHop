@@ -8,6 +8,7 @@
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
+  import FamilySwitcher from './lib/FamilySwitcher.svelte';
   import Home from './lib/pages/Home.svelte';
   import Generate from './lib/pages/Generate.svelte';
   import Split from './lib/pages/Split.svelte';
@@ -158,6 +159,7 @@
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12m0 0-4.5-4.5M12 16l4.5-4.5M5 20h14"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 </svg>
 
@@ -172,6 +174,7 @@
   {/if}
   <span class="sp"></span>
   {#if dash}<a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>{/if}
+  {#if !dash}<FamilySwitcher />{/if}
   <div class="menu" id="langMenu">
     <button class="btn btn--sm btn--outline" id="langBtn" bind:this={langBtn} aria-haspopup="listbox" aria-expanded={langOpen} aria-label={t('top.language')} onclick={(e) => { e.stopPropagation(); langOpen ? closeLang() : openLang(); }}>
       <Icon name="globe" /><span>{code(i18n.locale)}</span>
