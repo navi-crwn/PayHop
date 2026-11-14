@@ -151,10 +151,12 @@ func (a *App) hopUserAction(w http.ResponseWriter, r *http.Request, body []byte)
 		return
 	}
 	sub := r.PathValue("sub")
-	if _, err := a.db.UserBySub(sub); errors.Is(err, db.ErrNotFound) {
+	u, err := a.db.UserBySub(sub)
+	if errors.Is(err, db.ErrNotFound) {
 		hopFail(w, http.StatusNotFound, "not_found", "this account never signed in here")
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		hopServerErr(w, "user", err)
 		return
 	}
@@ -163,6 +165,7 @@ func (a *App) hopUserAction(w http.ResponseWriter, r *http.Request, body []byte)
 		hopServerErr(w, "user action "+q.Action, err)
 		return
 	}
+	log.Printf("hop action %s user=%d sessions=%d", q.Action, u.ID, n) // internal id only: no name, e-mail or reason
 	hopOK(w, map[string]any{"sub": sub, "revoked": true, "sessions": n})
 }
 

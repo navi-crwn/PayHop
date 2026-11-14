@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -172,5 +175,29 @@ func TestRefusedCallsNeverEndSessions(t *testing.T) {
 	res, _ := http.Post(srv.URL+"/hop/users/42/actions", "application/json", bytes.NewReader(body))
 	if res.StatusCode != 401 || !hasSession(a, "keep") {
 		t.Fatalf("unsigned call: %d, session kept=%v", res.StatusCode, hasSession(a, "keep"))
+	}
+}
+
+func TestRevokeSessionsLeavesOneLogLineWithNoPersonalData(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer log.SetOutput(os.Stderr)
+	a, srv := newTestApp(t, true)
+	seedSession(t, a, "42", "h1")
+	signed(t, srv, "imperium", "POST", "/hop/users/42/actions", []byte(`{"action":"revoke_sessions","reason":"secret reason ana@example.org"}`))
+	out := buf.String()
+	if strings.Count(out, "hop action revoke_sessions") != 1 || !strings.Contains(out, "sessions=1") {
+		t.Fatalf("log: %q", out)
+	}
+	for _, leak := range []string{"ana@example.org", "secret reason", "Helena", "42@example.org"} {
+		if strings.Contains(out, leak) {
+			t.Errorf("the log line holds %q: %s", leak, out)
+		}
+	}
+	// a refused call leaves no such line
+	buf.Reset()
+	signed(t, srv, "imperium", "POST", "/hop/users/999/actions", []byte(`{"action":"revoke_sessions"}`))
+	if strings.Contains(buf.String(), "hop action") {
+		t.Errorf("a refused call logged an action: %s", buf.String())
 	}
 }
