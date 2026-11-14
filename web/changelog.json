@@ -42,8 +42,8 @@
         },
         {
           "type": "changed",
-          "where": "Top bar on phones",
-          "text": "On a 375 pixel wide phone the top bar no longer runs past the right edge, in any of the nine languages: the language button shows only its globe on small screens, and the menus open fully on the screen. Reported by the site owner."
+          "where": "Top bar and home page on phones",
+          "text": "On phones 360 to 390 pixels wide the top bar no longer runs past the right edge in any of the nine languages: on the narrowest screens it shows the logo alone, the language button shows only its globe, and the menus open fully on the screen. The table of payment formats on the home page now scrolls inside its own box instead of making the whole page wider. Reported by the site owner."
         },
         {
           "type": "changed",

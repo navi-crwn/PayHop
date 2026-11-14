@@ -482,7 +482,6 @@ dialog.confirm .actions { justify-content: flex-end; }
 /* the formats table scrolls inside its own box instead of widening the page */
 .tbl-wrap { overflow-x: auto; border-radius: var(--card-radius); }
 .tbl-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.tbl-wrap .tbl { min-width: 32rem; }
 /* very narrow phones: the logo alone in the top bar (the name stays for screen readers), so the name
    never touches the controls next to it */
 @media (max-width: 400px) {
