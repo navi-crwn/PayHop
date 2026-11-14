@@ -2,9 +2,13 @@
   import { onMount } from 'svelte';
   import { i18n } from '../i18n/index.svelte';
 
-  interface Entry { kind: 'pr' | 'commit' | 'tag'; date: string; title: string; url: string; id: string }
+  // One entry is one release written in plain words (schema 2: version, summary, items). An older snapshot
+  // entry has no items and is drawn as one line, as before.
+  interface Item { type: string; where: string; text: string }
+  interface Entry { kind: 'pr' | 'commit' | 'tag'; date: string; title: string; url: string; id: string; version?: string; summary?: string; items?: Item[] }
   const t = (k: string) => i18n.t(k);
-  const PAGE = 40;
+  const PAGE = 20;
+  const ORDER = ['added', 'changed', 'fixed', 'security', 'removed', 'deprecated'];
 
   let entries = $state<Entry[]>([]);
   let shown = $state(PAGE);
@@ -30,6 +34,7 @@
     }
   };
   const kind = (k: string) => t(k === 'pr' ? 'cl.pr' : k === 'tag' ? 'cl.release' : 'cl.commit');
+  const groups = (items: Item[]) => ORDER.map((type) => ({ type, items: items.filter((i) => i.type === type) })).filter((g) => g.items.length);
 </script>
 
 <div class="wrap page">
@@ -37,11 +42,24 @@
   {#if ready && !entries.length}
     <p class="hint">{t('cl.empty')}</p>
   {:else}
-    <ul class="cl">
+    <div class="rels">
       {#each entries.slice(0, shown) as e}
-        <li><time datetime={e.date}>{date(e.date)}</time><a href={e.url} rel="noopener">{e.title}</a><span class="id">{kind(e.kind)} {e.id}</span></li>
+        {#if e.items?.length}
+          <article class="card rel">
+            <p class="rel-meta"><span>{e.version ? 'v' + e.version : e.id}</span><time datetime={e.date}>{date(e.date)}</time></p>
+            <h2>{e.title}</h2>
+            {#if e.summary}<p class="rel-sum">{e.summary}</p>{/if}
+            {#each groups(e.items) as g}
+              <h3>{t('cl.' + g.type)}</h3>
+              <ul>{#each g.items as i}<li><b>{i.where}.</b> {i.text}</li>{/each}</ul>
+            {/each}
+            <a class="rel-more" href={e.url} rel="noopener">{t('cl.details')} →</a>
+          </article>
+        {:else}
+          <p class="rel-old"><time datetime={e.date}>{date(e.date)}</time> <a href={e.url} rel="noopener">{e.title}</a> <span class="id">{kind(e.kind)} {e.id}</span></p>
+        {/if}
       {/each}
-    </ul>
+    </div>
     {#if entries.length > shown}<button class="btn btn--outline cl-more" onclick={() => (shown += PAGE)}>{t('cl.more')}</button>{/if}
   {/if}
 </div>

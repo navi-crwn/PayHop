@@ -1,62 +1,61 @@
 # Changelog
 
-What changed in PayHop, newest first. The `/changelog` page shows the repository history from a snapshot
-(`web/changelog.json`, written by `scripts/build-changelog.py`).
+What changed in PayHop, newest release first. Each entry says what changed, where you see it, what it means for you and why it was done. Technical notes live in the GitHub release of each version.
 
 ## [Unreleased]
 
-## [0.0.4] - 2026-11-14
-
-### Fixed
-- An address the app does not own now answers with a real 404 instead of the app shell; the addresses it owns still answer 200.
-
-### Changed
-- `npm test` resolves its root with `fileURLToPath`, so it runs on Windows.
-- CI loads the built app in a real browser (`tools/smoke.mjs`) and fails on a console error, a failed request, a blank page or an app that never mounts. Tests also keep the public pages byte-equal for every visitor language, which is why they need no `Vary: Cookie`.
-
-## [0.0.3] - 2026-11-12
+## [0.0.5] - 2026-11-14 - Family menu and a calmer dashboard
 
 ### Added
-- A visitor with no payment method can try the app: "Try with sample data" on `/generate`, "Load an example bill" on `/split`, and a line under the home hero (`/generate?sample=1`). A sample is marked "SAMPLE: not a real account. Do not pay." on the QR card and printed in a band at the top of the downloaded PNG; the receiver is "DEMO: do not pay". The code a sample draws, the text under it, the copied text and the PNG are not payable on purpose: the EPC service tag line is replaced, so banking apps refuse it, while the form values still pass the format's own checks. A sample cannot be saved as a method or a bill and is never added to the history. Only EPC SEPA has one (the IBAN registry's own example for Germany); the other formats name a person's handle, number or account and their documentation gives none that belongs to nobody, so they have no sample. The example bill's dish names and every new string are in all nine languages; tests that every sample passes `build()`, that a sample payload is never the EPC payload, and that a sample PNG carries the marker whole in every language.
-- Theme and language are kept in the family cookies `hop_theme` and `hop_lang` (on `.hel.ink`, host-only elsewhere), read before first paint. The old theme key (`hop-theme`) is moved into the theme cookie once; the old language key (`hop-lang`) is still read and kept up to date, but is not copied into `hop_lang` until the reader picks a language.
+- **Top bar on public pages.** A small grid button now opens a list of the other HOP apps, starting with HOP ID, so you can jump to them without scrolling to the footer. Before, the top bar had no shortcut to the other apps. Once you are signed in, the same list is in the sidebar of your dashboard instead.
+- **Dashboard.** An announcement from the site owner can now appear as a card at the top of your dashboard, with a Close button. A closed announcement stays hidden for a week. When there is no announcement, nothing is shown and no empty space is left. This gives every HOP dashboard a place for news.
 
 ### Changed
-- The summary the server writes into every public page is now the page's visible first view (same top bar, heading, fonts and theme as the app, light and dark), not a hidden block; readers without scripts get one sentence saying the app needs JavaScript. The app replaces it on mount without a visible jump. Tests keep the title table in `App.svelte` and the one in `internal/app/pages.go` equal.
-- The language is written only when the reader picks one, no longer on every page load.
+- **Dashboard sidebar.** The line "Part of Hop Easy Link" is now the last line at the bottom of the sidebar, and the sidebar on a phone reaches the bottom of the screen. Before, the line only existed in the public page footer, so it was missing from the dashboard.
+- **Logo and Back button.** If you are signed in, the PayHop logo and the Back button on a page that does not exist now take you to your dashboard instead of the public home page. Visitors who are not signed in still go to the home page. People signed in kept landing on the public page and had to find their way back.
+- **Terms, Privacy and Changelog.** If you are signed in, these pages now open inside your dashboard, with the sidebar around them, so there is always a way back. Visitors and search engines still see them as public pages.
+- **Top bar and home page on phones.** On phones 360 to 390 pixels wide the top bar no longer runs past the right edge in any of the nine languages: on the narrowest screens it shows the logo alone, the language button shows only its globe, and the menus open fully on the screen. The table of payment formats on the home page now scrolls inside its own box instead of making the whole page wider. Reported by the site owner.
+- **Changelog page.** The changelog now lists one plain-language entry per release, grouped as added, changed, fixed and so on, with a Technical details link to the full notes. Before, it listed raw code changes, which most people could not read. The page is written from this file and checked by the automatic tests.
 
-## [0.0.2] - 2026-11-12
-
-### Changed
-- Opening PayHop from the hub's launcher lands on the account page, signed in. The Sign in button on any page returns to that page. In-app sign-in links are built by one helper (`signInHref`); the server tells the two cases apart by `back=1`, and the landing is always a local path.
-- Tests for the landing rules, and for a second account signing in after sign-out seeing nothing of the first.
-
-## [0.0.1] - 2026-11-11
-
-The first release: payment QR codes and split bills in the browser, accounts that can keep payment methods and bills (encrypted, only on request), part of the HOP family on hop-assets v9.
-
-### Changed
-- hop-assets v9 replaces v8: vendored byte for byte from the hub (`public/hop-assets/v9`), `tools/hop-apps.json` is the hub manifest, the family list in the app is read from it at build time, and the local brand folder, mark, PWA icons, name font file and 3D block map are gone (mark, icons, Unbounded name subset, hero stills and the PayHop map come from v9). The README family table and `scripts/check-hop-family.sh` are the hub's.
-
-### Added
-- PromptPay (Thailand, mobile number, optional amount) and VietQR (Vietnam, bank BIN + account, optional amount) in the generator, built from typed identifiers with a small EMVCo module in `hop-pay` (TLV writer, CRC-16/CCITT-FALSE, TLV reader and CRC check for read-back tests). Tag layout is from secondary sources and marked unverified in `docs/WALLET-MATRIX.md`; no official example payload is stored; both are labelled "not tested in a wallet yet". No scanner, no QR pasting, no other EMVCo scheme.
-- Saved payment methods (up to 20, one row each) and bill history (the last 200) for signed-in accounts, sealed with AES-256-GCM under `PAYHOP_PROFILE_KEY` (random nonce per row; `PAYHOP_PROFILE_KEY_PREV` and `payhop reencrypt` for rotation). Explicit, unticked-by-default consent for every method and bill, delete one or everything at any time, `account.deleted` from the hub removes it all. Without a key saving is off and the rest of the app works. Nothing saved is written to logs or shown through `/hop/*` (the manifest lists no content types; `/hop/stats` carries accounts and sessions only).
-- `/account` lists what is saved with a delete dialog; `/generate` can use a saved method and save the current method or bill. Strings in all nine languages; privacy and terms say what is stored and carry a date.
-- `canonical` on every page, `sitemap.xml`, `robots.txt` with the sitemap and the private paths, `noindex` on `/account`.
-- README badges and WebP screenshots; `docs/DEPLOY.md` covers the key, rotation and backups.
-- PayHop (`pay.hel.ink`): payment QR codes for PayPal.me, Cash App, Venmo, Solana Pay, UPI and EPC SEPA, and a split-bill calculator, both running in the browser tab.
-- The receiver name is required, shown next to the code and printed under it in the downloaded PNG; a confirmation tick is needed before download; every format is labelled "not tested in a wallet yet" (`docs/WALLET-MATRIX.md` lists the source and the status of each).
-- `web/src/lib/pay` (pure, no DOM): CRC-16, text hygiene (NFC, hidden and bidi characters, mixed alphabets), integer amounts by currency exponent, IBAN and Solana address checks, `splitBill` with exact sums; 29 tests including a QR round trip through a decoder.
-- Go server (healthz, CSP without CDN, no COOP/COEP), HOP ID sign-in, signed `/hop/*` protocol, `/api/v1/changelog`.
-- Public top bar and family footer, signed-in dashboard chrome (top bar with language, theme, account menu; sidebar with the HOP family), home page with the 3D PayHop mark (hop-assets v8 engine, block map in `src/lib/brand.ts`), nine languages (en, zh-CN, de, id, ja, pt-BR, es, fr, ru), reduced-motion static page, offline service worker.
-- `deploy/` (systemd unit, env example, nginx vhost, `install.sh`), CI (web, Go, commit message check), README in nine languages, `SECURITY.md`.
+## [0.0.4] - 2026-11-14 - Honest 404 pages
 
 ### Fixed
-- The name printed on the downloaded PNG is cut on whole characters, never inside an emoji or a surrogate pair.
+- **Addresses PayHop does not have.** A mistyped address now answers "not found" properly instead of showing the app as if the page existed. Search engines and link checkers no longer take such addresses for real pages. Addresses PayHop does own are unchanged.
 
-### Not yet
-- QRIS, Pix and other bank-QR schemes; pasting someone else's QR (needs real sample codes and wallet tests).
+### Changed
+- **Behind the scenes.** The automatic tests now run on Windows too, and a test loads the finished app in a real browser and fails on a blank page or an error. Another test keeps the public pages identical for every visitor language, which is why they can be stored safely by shared caches. Nothing changes on screen.
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.4...HEAD
+## [0.0.3] - 2026-11-12 - Sample data and first view
+
+### Added
+- **Payment QR and Split a bill.** You can now try the app without any payment details: "Try with sample data" fills the generator and "Load an example bill" fills the bill splitter. A sample is clearly marked "SAMPLE: not a real account. Do not pay." on the code and on the downloaded picture, and the code itself cannot be paid, so nobody can send money to a made-up account by mistake. Only the SEPA euro format has a sample, because it is the only one with an example that belongs to nobody.
+- **Theme and language.** Your choice of light or dark and of language is now remembered across the HOP apps, so you do not have to pick it again in each one. It is read before the page appears, so the page does not flash the wrong theme.
+
+### Changed
+- **Public pages without JavaScript.** Search engines and readers without scripts now get the real first screen of each page, with the same top bar, heading and look as the app, instead of a hidden block of text.
+- **Language.** PayHop now remembers a language only when you pick one, instead of every time a page loads.
+
+## [0.0.2] - 2026-11-12 - Sign-in landing
+
+### Changed
+- **Sign in.** Opening PayHop from the HOP ID launcher now lands you on your account page, already signed in, and the Sign in button on any page brings you back to that page. Another account signing in after you sign out sees nothing of yours.
+
+## [0.0.1] - 2026-11-11 - First release
+
+The first release: payment QR codes and a bill splitter that run in your browser, with accounts that can keep payment methods and bills, part of the HOP family.
+
+### Added
+- **Payment QR.** Make a payment QR code for PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay and VietQR. The receiver name is required, shown next to the code and printed under it, and a tick is needed before download, so a wrong code is less likely to be paid. Every format says it has not been tested in a wallet yet, because that is true.
+- **Split a bill.** Add who was there, what each item cost and who shared it; taxes and tips are spread by what each person ordered and the shares add up exactly.
+- **Account page.** Signed in with your HOP ID, you can keep up to 20 payment methods and the last 200 bills. They are stored encrypted, only when you tick a box for each one, and you can delete one or all at any time. Without that choice nothing is saved.
+- **Nine languages and both themes.** English, Chinese, German, Indonesian, Japanese, Portuguese, Spanish, French and Russian, light and dark, with a calm static page for people who prefer reduced motion. It works offline after the first visit.
+- **Search engines and privacy.** Each page has its own address for search engines, the signed-in page is kept out of search results, and the privacy and terms pages say plainly what is stored.
+
+### Fixed
+- **Downloaded picture.** The receiver name printed on the picture is cut at a whole character, never in the middle of an emoji.
+
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.5...HEAD
+[0.0.5]: https://github.com/navi-crwn/PayHop/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/navi-crwn/PayHop/compare/v0.0.1...v0.0.2

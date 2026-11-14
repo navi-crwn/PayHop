@@ -115,6 +115,8 @@
 
 <section class="blk" style="padding-top:8px"><div class="wrap">
   <div class="sec-head"><h2 class="sec">{t('home.s2_pre')} <em>{t('home.s2_accent')}</em></h2></div>
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex: a box that scrolls sideways must be reachable by keyboard -->
+  <div class="tbl-wrap" role="region" aria-label={t('home.s2_pre')} tabindex="0">
   <table class="tbl">
     <thead><tr><th>{t('home.th_format')}</th><th>{t('home.th_where')}</th><th>{t('home.th_holds')}</th><th>{t('home.th_test')}</th></tr></thead>
     <tbody>
@@ -123,6 +125,7 @@
       {/each}
     </tbody>
   </table>
+  </div>
   <p class="later"><span>{t('home.later')}</span>{#each LATER as l}<span class="chip">{l}</span>{/each}</p>
 </div></section>
 

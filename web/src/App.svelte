@@ -8,6 +8,7 @@
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
+  import FamilySwitcher from './lib/FamilySwitcher.svelte';
   import Home from './lib/pages/Home.svelte';
   import Generate from './lib/pages/Generate.svelte';
   import Split from './lib/pages/Split.svelte';
@@ -139,8 +140,11 @@
 
   const path = $derived(route.path);
   const signedIn = $derived(account.ready && account.signedIn);
-  // signed in, the tools live inside the dashboard chrome; the home page and changelog stay public pages
-  const dash = $derived(signedIn && known(path) && path !== '/' && path !== '/changelog' && path !== '/terms' && path !== '/privacy');
+  // signed in, every page but the public home page lives inside the dashboard chrome (the info pages too, so
+  // the sidebar is the way back); guests and search engines get the public frame
+  const dash = $derived(signedIn && known(path) && path !== '/');
+  // the logo and the "back" button lead a signed-in person to the dashboard, a guest to the public start page
+  const homeHref = $derived(signedIn ? '/account' : '/');
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
@@ -158,12 +162,15 @@
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12m0 0-4.5-4.5M12 16l4.5-4.5M5 20h14"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 </svg>
 
 <header class="top"><div class="wrap" class:full={dash}>
   {#if dash}<button class="btn btn--sm btn--outline btn--icon menu-btn" style="width:32px" aria-label={t('side.menu')} aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name="menu" /></button>{/if}
-  <a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+  <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
   {#if !dash}
     <nav class="nav" aria-label={t('nav.main')}>
       <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
@@ -172,6 +179,7 @@
   {/if}
   <span class="sp"></span>
   {#if dash}<a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>{/if}
+  {#if !dash}<FamilySwitcher />{/if}
   <div class="menu" id="langMenu">
     <button class="btn btn--sm btn--outline" id="langBtn" bind:this={langBtn} aria-haspopup="listbox" aria-expanded={langOpen} aria-label={t('top.language')} onclick={(e) => { e.stopPropagation(); langOpen ? closeLang() : openLang(); }}>
       <Icon name="globe" /><span>{code(i18n.locale)}</span>
@@ -212,8 +220,12 @@
       <div class="wrap nf"><h1>{t('top.signin')}</h1><a class="btn btn--primary" href={signInHref('/account')}>{t('top.signin')}</a></div>
     {/if}
   {:else}
-    <div class="wrap nf"><h1>{t('nf.title')}</h1><a class="btn btn--outline" href="/">{t('nf.back')}</a></div>
+    <div class="wrap nf"><h1>{t('nf.title')}</h1><a class="btn btn--outline" href={homeHref}>{t('nf.back')}</a></div>
   {/if}
+{/snippet}
+
+{#snippet partOf()}
+  <div class="ft-part"><img src={FAMILY.find((f) => f.slug === "hub")?.mark} alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
 {/snippet}
 
 {#if dash}
@@ -238,20 +250,21 @@
       <nav class="links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
-          <li><a href="/terms">{t('ft.terms')}</a></li>
-          <li><a href="/privacy">{t('ft.privacy')}</a></li>
-          <li><a href="/changelog">{t('nav.changelog')}</a></li>
+          <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
+          <li><a href="/privacy" aria-current={here('/privacy')}>{t('ft.privacy')}</a></li>
+          <li><a href="/changelog" aria-current={here('/changelog')}>{t('nav.changelog')}</a></li>
         </ul>
       </nav>
+      {@render partOf()}
     </aside>
     <main class="dash-main">{@render page()}</main>
   </div>
 {:else}
   <main>{@render page()}</main>
   <footer class="ft" id="footer"><div class="wrap">
-    <div class="ft-part"><img src={FAMILY.find((f) => f.slug === "hub")?.mark} alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
+    {@render partOf()}
     <div class="ft-cols">
-      <div class="ft-brand"><a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
+      <div class="ft-brand"><a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
       <div><h2 class="ft-h">{t('ft.support')}</h2><ul>
         <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
         <li><a href="{HUB}/contact" rel="noopener">{t('ft.contact')}</a></li>

@@ -85,6 +85,15 @@ h1, h2, h3, p { margin: 0; }
 .menu-pop .code { font: 12px var(--mono); color: var(--muted); }
 .ico { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
+/* family picker in the public top bar (the dashboard has the HOP family list in its sidebar) */
+.family-switcher { position: relative; flex: none; }
+.family-switcher > summary { list-style: none; cursor: pointer; }
+.family-switcher > summary::-webkit-details-marker { display: none; }
+.family-switcher nav { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 30; width: 260px; padding: 8px; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+.family-switcher nav a { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; }
+.family-switcher nav a:hover, .family-switcher nav a:focus-visible { background: var(--panel2); }
+.family-switcher nav img { width: 28px; height: 28px; object-fit: contain; flex: none; image-rendering: pixelated; }
+
 /* ---------- home: hero ---------- */
 .hero { padding: 72px 0 56px; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 56px; align-items: center; }
@@ -313,9 +322,18 @@ section.blk { padding: 56px 0; }
 .side a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .side a img { width: 18px; height: 18px; image-rendering: pixelated; }
 .side .links { margin-top: auto; }
+.side .ft-part { padding: 8px 10px 0; margin-top: -8px; }
+.side .ft-part a { display: inline; height: auto; padding: 0; font-size: inherit; font-weight: 400; }
+.side .ft-part a:hover { background: none; text-decoration: underline; }
 .side .links a { color: var(--muted); font-weight: 400; font-size: 13px; height: 30px; }
 .dash-main { min-width: 0; }
 .dash-main .page { padding-top: 28px; }
+.announce { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line)); border-radius: var(--card-radius); background: var(--accent-soft); }
+.announce > .ico { margin-top: 2px; color: var(--accent); }
+.announce-body { flex: 1; min-width: 0; font-size: 14px; }
+.announce-body p { margin-top: 2px; color: var(--muted); overflow-wrap: anywhere; }
+.announce-body a { color: var(--accent); }
+.announce .btn { margin: -4px -6px 0 0; flex: none; }
 .menu-btn { display: none; }
 .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .cards .card + .card { margin-top: 0; }
@@ -356,6 +374,15 @@ dialog.confirm .actions { justify-content: flex-end; }
 .cl a:hover { text-decoration: underline; }
 .cl .id { font: 12px var(--mono); color: var(--muted); }
 .cl-more { margin-top: 16px; }
+.rels { display: grid; gap: 16px; max-width: 52rem; }
+.rel .rel-meta { display: flex; gap: 12px; align-items: baseline; font: 12px var(--mono); color: var(--muted); }
+.rel h2 { margin: 6px 0 10px; font-size: 20px; letter-spacing: -.01em; }
+.rel h3 { margin: 16px 0 6px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.rel ul { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: 8px; font-size: 14px; line-height: 1.55; }
+.rel .rel-sum { color: var(--muted); font-size: 14px; }
+.rel-more { display: inline-block; margin-top: 16px; font-size: 13px; color: var(--accent); text-decoration: none; }
+.rel-more:hover { text-decoration: underline; }
+.rel-old { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .nf { padding: 96px 0; text-align: center; display: grid; gap: 18px; justify-items: center; }
 .nf h1 { font-size: 30px; letter-spacing: -.02em; }
 .ft-copy { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: right; }
@@ -369,7 +396,7 @@ dialog.confirm .actions { justify-content: flex-end; }
 
 @media (max-width: 1024px) {
   .dash { grid-template-columns: 1fr; }
-  .side { position: fixed; inset: 56px 0 0 0; z-index: 25; height: auto; background: var(--bg); transform: translateX(-100%); transition: transform .2s ease; width: min(300px, 86vw); border-right: 1px solid var(--line); }
+  .side { position: fixed; align-self: stretch; inset: 56px 0 0 0; z-index: 25; height: auto; background: var(--bg); transform: translateX(-100%); transition: transform .2s ease; width: min(300px, 86vw); border-right: 1px solid var(--line); }
   .side.open { transform: none; }
   .menu-btn { display: inline-flex; }
   .cl li { grid-template-columns: 1fr; gap: 2px; }
@@ -440,3 +467,29 @@ dialog.confirm .actions { justify-content: flex-end; }
   :root:not([data-theme]) .hero-art .dk { display: block; }
 }
 #shareQr .sample-badge { margin-top: 14px; }
+
+/* phones: one top-bar row that always fits. The family panel spans the screen under the bar (the bar is the
+   positioned ancestor, so the picker itself must not be one), and the language button shows only its globe. */
+@media (max-width: 640px) {
+  .family-switcher { position: static; }
+  .family-switcher nav { inset-inline: 12px; top: calc(100% + 6px); width: auto; }
+}
+@media (max-width: 480px) {
+  #langBtn { width: 32px; padding: 0; }
+  #langBtn span { display: none; }
+}
+
+/* the formats table scrolls inside its own box instead of widening the page */
+.tbl-wrap { overflow-x: auto; border-radius: var(--card-radius); }
+.tbl-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* very narrow phones: the logo alone in the top bar (the name stays for screen readers), so the name
+   never touches the controls next to it */
+@media (max-width: 400px) {
+  .top .brand { margin-right: 0; }
+  .top .brand .pname { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+/* phones: the language list hangs from the bar's right edge, so it stays on screen whatever sits to its left */
+@media (max-width: 640px) {
+  .top .menu { position: static; }
+  .top .menu-pop { right: 12px; }
+}

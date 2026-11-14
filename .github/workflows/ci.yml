@@ -13,6 +13,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Changelog is plain and current
+        run: python3 scripts/build-changelog.py --repo PayHop --check && python3 -m unittest scripts/test_build_changelog.py
       - run: npm test
       - run: npm run lint:i18n
       - run: npm run check
