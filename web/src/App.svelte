@@ -148,6 +148,8 @@
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
+  // the page title the dashboard bar shows (keys that already exist; each page keeps its own heading below)
+  const TITLE: Record<string, string> = { '/account': 'nav.dashboard', '/generate': 'nav.generate', '/split': 'nav.split', '/changelog': 'cl.title', '/terms': 'terms.t', '/privacy': 'priv.t' };
 </script>
 
 <svelte:document onclick={onDocClick} onkeydown={onDocKey} />
@@ -168,18 +170,7 @@
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 </svg>
 
-<header class="top"><div class="wrap" class:full={dash}>
-  {#if dash}<button class="btn btn--sm btn--outline btn--icon menu-btn" style="width:32px" aria-label={t('side.menu')} aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name="menu" /></button>{/if}
-  <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
-  {#if !dash}
-    <nav class="nav" aria-label={t('nav.main')}>
-      <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
-      <a href="/split" aria-current={here('/split')}>{t('nav.split')}</a>
-    </nav>
-  {/if}
-  <span class="sp"></span>
-  {#if dash}<a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>{/if}
-  {#if !dash}<FamilySwitcher />{/if}
+{#snippet tools()}
   <div class="menu" id="langMenu">
     <button class="btn btn--sm btn--outline" id="langBtn" bind:this={langBtn} aria-haspopup="listbox" aria-expanded={langOpen} aria-label={t('top.language')} onclick={(e) => { e.stopPropagation(); langOpen ? closeLang() : openLang(); }}>
       <Icon name="globe" /><span>{code(i18n.locale)}</span>
@@ -206,7 +197,7 @@
   {:else if account.ready && account.sso}
     <a class="btn btn--sm btn--outline" id="signin" href={signInHref(path)}>{t('top.signin')}</a>
   {/if}
-</div></header>
+{/snippet}
 
 {#snippet page()}
   {#if path === '/'}<Home />
@@ -229,25 +220,21 @@
 {/snippet}
 
 {#if dash}
-  <div class="dash">
-    <aside class="side" class:open={sideOpen} aria-label={t('side.menu')}>
-      <nav>
-        <h2>{t('side.menu')}</h2>
-        <ul>
-          <li><a href="/account" aria-current={here('/account')}><Icon name="home" />{t('nav.dashboard')}</a></li>
-          <li><a href="/generate" aria-current={here('/generate')}><Icon name="qr" />{t('nav.generate')}</a></li>
-          <li><a href="/split" aria-current={here('/split')}><Icon name="split" />{t('nav.split')}</a></li>
-        </ul>
+  <div class="shell" class:open={sideOpen}>
+    <aside class="shell-side" id="shell-side" aria-label={t('side.menu')}>
+      <a class="shell-brand" href={homeHref}><img src={BRAND.mark} alt="" width="26" height="26"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+      <nav class="shell-nav" aria-label={t('side.menu')}>
+        <a href="/account" aria-current={here('/account')}><Icon name="home" />{t('nav.dashboard')}</a>
+        <a href="/generate" aria-current={here('/generate')}><Icon name="qr" />{t('nav.generate')}</a>
+        <a href="/split" aria-current={here('/split')}><Icon name="split" />{t('nav.split')}</a>
       </nav>
-      <nav>
-        <h2>{t('side.family')}</h2>
-        <ul>
-          {#each others as f}
-            <li><a href={familyHref(f, true, account.hubUrl)} rel="noopener"><img src={f.mark} alt="" width="18" height="18">{f.name}</a></li>
-          {/each}
-        </ul>
+      <p class="shell-label">{t('side.family')}</p>
+      <nav class="shell-nav" aria-label={t('side.family')}>
+        {#each others as f}
+          <a href={familyHref(f, true, account.hubUrl)} rel="noopener"><img src={f.mark} alt="" width="18" height="18">{f.name}</a>
+        {/each}
       </nav>
-      <nav class="links">
+      <nav class="shell-side-foot links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
           <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
@@ -257,9 +244,29 @@
       </nav>
       {@render partOf()}
     </aside>
-    <main class="dash-main">{@render page()}</main>
+    {#if sideOpen}<div class="shell-scrim" onclick={() => (sideOpen = false)} role="presentation"></div>{/if}
+    <div class="shell-body">
+      <header class="shell-top">
+        <button class="btn btn--sm btn--outline btn--icon shell-burger" type="button" style="width:32px" aria-label={t('side.menu')} aria-controls="shell-side" aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name={sideOpen ? 'x' : 'menu'} /></button>
+        <p class="shell-title">{t(TITLE[path] ?? 'nav.dashboard')}</p>
+        <span class="sp"></span>
+        <a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>
+        {@render tools()}
+      </header>
+      <main class="shell-main">{@render page()}</main>
+    </div>
   </div>
 {:else}
+  <header class="top"><div class="wrap">
+    <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+    <nav class="nav" aria-label={t('nav.main')}>
+      <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
+      <a href="/split" aria-current={here('/split')}>{t('nav.split')}</a>
+    </nav>
+    <span class="sp"></span>
+    <FamilySwitcher />
+    {@render tools()}
+  </div></header>
   <main>{@render page()}</main>
   <footer class="ft" id="footer"><div class="wrap">
     {@render partOf()}
