@@ -10,10 +10,9 @@ import (
 
 // One address per language: ?lang=<code> (KONTRAK-SEO-BAHASA). English is the bare address.
 
-
 func linkOf(t *testing.T, body, rel string) string {
 	t.Helper()
-	m := regexp.MustCompile(`<link rel="` + rel + `" href="([^"]*)">`).FindAllStringSubmatch(body, -1)
+	m := regexp.MustCompile(`<link rel="`+rel+`" href="([^"]*)">`).FindAllStringSubmatch(body, -1)
 	if len(m) != 1 {
 		t.Fatalf("%d %s links, want 1", len(m), rel)
 	}
