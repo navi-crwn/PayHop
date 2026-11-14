@@ -41,7 +41,7 @@ type App struct {
 	db      *db.DB
 	static  fs.FS
 	index   []byte
-	pages   map[string][]byte // the shell as each public route is served (pages.go)
+	pages   map[string]map[string][]byte // the shell as each public route is served, per language (pages.go)
 	used    usedTickets
 	nonces  hop.Nonces
 	started time.Time
@@ -55,7 +55,7 @@ func New(cfg Config, d *db.DB, static fs.FS) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, englishStrings()), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
+	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, dictionaries()), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
 	a.hubUp = newHubProbe(cfg.SSOURL).Up
 	a.ann = newAnnCache(cfg.SSOURL)
 	return a, nil
@@ -77,6 +77,7 @@ func (a *App) Handler() http.Handler {
 	a.hopRoutes(m)
 	a.accountRoutes(m)
 
+	m.HandleFunc("GET /sitemap.xml", a.sitemap)
 	m.HandleFunc("GET /api/v1/changelog", a.changelogJSON)
 	m.HandleFunc("GET /api/v1/announcement", a.apiAnnouncement)
 
@@ -132,7 +133,7 @@ func (a *App) serveStatic(w http.ResponseWriter, r *http.Request) {
 		} else {
 			h.Set("Content-Type", "text/html; charset=utf-8")
 			h.Set("Cache-Control", "no-cache")
-			body, status := a.shell(name, h)
+			body, status := a.shell(name, pageLang(r.URL.Query().Get("lang")), h)
 			if status != http.StatusOK {
 				w.WriteHeader(status)
 			}

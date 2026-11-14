@@ -23,6 +23,12 @@ var Changelog []byte
 //go:embed src/lib/i18n/en.json
 var English []byte
 
+// I18n is every language file of the app: the server writes the first view of a public page in the language
+// its ?lang= names (internal/app/pages.go).
+//
+//go:embed src/lib/i18n/*.json
+var I18n embed.FS
+
 // Dist is the content of web/dist, rooted so index.html is at "index.html".
 func Dist() fs.FS {
 	sub, err := fs.Sub(dist, "dist")

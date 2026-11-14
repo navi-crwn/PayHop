@@ -21,8 +21,15 @@ reader's theme. web/src/main.ts empties the node and mounts the app in the same
 task, so the app takes its place with nothing in between.
 
 The words are the app's own: every entry of publicPages names keys of the
-English dictionary (web/src/lib/i18n/en.json). Nothing is written here, except
-the two constants below that mirror the app (tools/seo.test.mjs keeps them equal).
+dictionaries (web/src/lib/i18n/*.json, English where a language lacks a key).
+Nothing is written here, except the two constants below that mirror the app
+(tools/seo.test.mjs keeps them equal).
+
+One address per language: ?lang=<code> picks the language of the page, and only
+that (never the cookie or Accept-Language), so one address is always one page and
+the answer stays Cache-Control: no-cache without Vary. English is the bare
+address. Each public page names its nine languages and x-default (hreflang) and
+sitemap.xml lists them (KONTRAK-SEO-BAHASA).
 */
 
 // The home hero's pictures and the date on the legal pages, as in web/src/lib/brand.ts and pages/Legal.svelte.
@@ -50,7 +57,7 @@ type publicPage struct {
 
 var publicPages = []publicPage{
 	{
-		Path: "/", Nav: "nav.home", Title: "app.title", H1: []string{"hero.h1"}, Lead: "hero.lede", Kind: "home",
+		Path: "/", Nav: "nav.home", Title: "app.title", Desc: "app.desc", H1: []string{"hero.h1"}, Lead: "hero.lede", Kind: "home",
 		Items: []pageItem{
 			{"home.b1_t", "home.b1_p"}, {"home.b2_t", "home.b2_p"}, {"home.b3_t", "home.b3_p"},
 			{"home.b4_t", "home.b4_p"}, {"home.b5_t", "home.b5_p"}, {"home.b6_t", "home.b6_p"},
@@ -109,21 +116,124 @@ var (
 	pageOriginRe  = regexp.MustCompile(`<(?:link rel="canonical" href|meta property="og:url" content)="(https?://[^/"]+)/?">`)
 )
 
-// buildPages is the shell as each public route is served. The site's address is
-// the one index.html already states; without it the shell is served as it is.
-func buildPages(index []byte, dict map[string]string) map[string][]byte {
-	m := pageOriginRe.FindSubmatch(index)
-	if m == nil {
-		return nil
+// pageLangs are the nine languages, in the order the family lists them (web/src/lib/prefs.js LANGS).
+var pageLangs = []string{"en", "zh-CN", "de", "id", "ja", "pt-BR", "es", "fr", "ru"}
+
+// pageLang is the language a ?lang= value names: one of the nine (any case, and pt or zh for the two with a
+// region); anything else is English, the bare address.
+func pageLang(q string) string {
+	q = strings.TrimSpace(q)
+	for _, l := range pageLangs {
+		if strings.EqualFold(q, l) {
+			return l
+		}
 	}
-	out := map[string][]byte{}
-	for _, p := range publicPages {
-		out[p.Path] = renderPage(index, string(m[1]), p, dict)
+	switch strings.ToLower(q) {
+	case "pt":
+		return "pt-BR"
+	case "zh":
+		return "zh-CN"
+	}
+	return "en"
+}
+
+// langSuffix is what an address of a page in this language ends with: nothing for English (the bare address).
+func langSuffix(lang string) string {
+	if lang == "en" {
+		return ""
+	}
+	return "?lang=" + lang
+}
+
+// dictionaries is every language's strings, English filling any key a language lacks.
+func dictionaries() map[string]map[string]string {
+	en := englishStrings()
+	out := map[string]map[string]string{"en": en}
+	for _, l := range pageLangs[1:] {
+		d := map[string]string{}
+		for k, v := range en {
+			d[k] = v
+		}
+		if b, err := web.I18n.ReadFile("src/lib/i18n/" + l + ".json"); err == nil {
+			var own map[string]string
+			if json.Unmarshal(b, &own) == nil {
+				for k, v := range own {
+					if strings.TrimSpace(v) != "" {
+						d[k] = v
+					}
+				}
+			}
+		}
+		out[l] = d
 	}
 	return out
 }
 
-func renderPage(index []byte, origin string, p publicPage, dict map[string]string) []byte {
+// originOf is the address index.html states for the site ("" when it states none).
+func originOf(index []byte) string {
+	if m := pageOriginRe.FindSubmatch(index); m != nil {
+		return string(m[1])
+	}
+	return ""
+}
+
+// buildPages is the shell as each public route is served in each language. The site's address is
+// the one index.html already states; without it the shell is served as it is.
+func buildPages(index []byte, dicts map[string]map[string]string) map[string]map[string][]byte {
+	origin := originOf(index)
+	if origin == "" {
+		return nil
+	}
+	out := map[string]map[string][]byte{}
+	for _, l := range pageLangs {
+		out[l] = map[string][]byte{}
+		for _, p := range publicPages {
+			out[l][p.Path] = renderPage(index, origin, p, dicts[l], l)
+		}
+	}
+	return out
+}
+
+// alternates are the <link rel="alternate" hreflang> lines of a page: the nine languages in order, then x-default
+// (the bare address, the same as English).
+func alternates(origin, path string) string {
+	var s strings.Builder
+	for _, l := range pageLangs {
+		s.WriteString(`<link rel="alternate" hreflang="` + l + `" href="` + origin + path + langSuffix(l) + `">` + "\n")
+	}
+	s.WriteString(`<link rel="alternate" hreflang="x-default" href="` + origin + path + `">`)
+	return s.String()
+}
+
+// sitemapXML lists every public page once, at its bare address, with its alternates.
+func sitemapXML(origin string) []byte {
+	var s strings.Builder
+	s.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n" + `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">` + "\n")
+	for _, p := range publicPages {
+		s.WriteString("  <url><loc>" + origin + p.Path + "</loc>")
+		for _, l := range pageLangs {
+			s.WriteString(`<xhtml:link rel="alternate" hreflang="` + l + `" href="` + origin + p.Path + langSuffix(l) + `"/>`)
+		}
+		s.WriteString(`<xhtml:link rel="alternate" hreflang="x-default" href="` + origin + p.Path + `"/></url>` + "\n")
+	}
+	s.WriteString("</urlset>\n")
+	return []byte(s.String())
+}
+
+func (a *App) sitemap(w http.ResponseWriter, r *http.Request) {
+	origin := originOf(a.index)
+	if origin == "" {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Write(sitemapXML(origin))
+}
+
+var pageHTMLLangRe = regexp.MustCompile(`<html lang="[^"]*">`)
+
+func renderPage(index []byte, origin string, p publicPage, dict map[string]string, lang string) []byte {
 	text := func(keys ...string) string {
 		var parts []string
 		for _, k := range keys {
@@ -133,8 +243,8 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 		}
 		return strings.Join(parts, " ")
 	}
-	url := origin + p.Path
-	b := index
+	url := origin + p.Path + langSuffix(lang) // English is the bare address; every other language has its own
+	b := pageHTMLLangRe.ReplaceAllLiteral(index, []byte(`<html lang="`+lang+`">`))
 	t := text(p.Title)
 	if site := pageSiteRe.FindSubmatch(index); t != "" && !p.App && site != nil {
 		t += " — " + string(site[1]) // "Split a bill — PayHop"; the title of the home page names the app already
@@ -150,7 +260,7 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 	b = pageOGURLRe.ReplaceAllLiteral(b, []byte(`<meta property="og:url" content="`+url+`">`))
 
 	canonical := `<link rel="canonical" href="` + url + `">`
-	head := ""
+	head := alternates(origin, p.Path)
 	if pageCanonRe.Match(b) {
 		b = pageCanonRe.ReplaceAllLiteral(b, []byte(canonical))
 	} else {
@@ -161,20 +271,22 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 	}
 	b = bytes.Replace(b, []byte("</head>"), []byte(head+"\n</head>"), 1)
 
-	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+firstView(p, text)+`</div>`), 1)
+	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+firstView(p, text, lang)+`</div>`), 1)
 }
 
 // firstView is what the page shows before the app takes over: the app's own top bar and heading, with its classes.
-func firstView(p publicPage, text func(...string) string) string {
+func firstView(p publicPage, text func(...string) string, lang string) string {
 	var s strings.Builder
+	suf := langSuffix(lang) // the plain links keep the language of the page they are on
+	href := func(path string) string { return path + suf }
 	cur := func(path string) string {
 		if path == p.Path {
 			return ` aria-current="page"`
 		}
 		return ""
 	}
-	s.WriteString(`<header class="top"><div class="wrap"><a class="brand" href="/"><img src="` + brandMark + `" alt="" width="28" height="28"><span class="pname hop-name-payhop">PayHop</span></a>`)
-	s.WriteString(`<nav class="nav" aria-label="` + text("nav.main") + `"><a href="/generate"` + cur("/generate") + `>` + text("nav.generate") + `</a><a href="/split"` + cur("/split") + `>` + text("nav.split") + `</a></nav></div></header>`)
+	s.WriteString(`<header class="top"><div class="wrap"><a class="brand" href="` + href("/") + `"><img src="` + brandMark + `" alt="" width="28" height="28"><span class="pname hop-name-payhop">PayHop</span></a>`)
+	s.WriteString(`<nav class="nav" aria-label="` + text("nav.main") + `"><a href="` + href("/generate") + `"` + cur("/generate") + `>` + text("nav.generate") + `</a><a href="` + href("/split") + `"` + cur("/split") + `>` + text("nav.split") + `</a></nav></div></header>`)
 	s.WriteString(`<main class="hop-static">`)
 
 	items := func(class string) {
@@ -198,9 +310,9 @@ func firstView(p publicPage, text func(...string) string) string {
 	case "home":
 		// the hero as web/src/lib/pages/Home.svelte draws it, then the six things it does
 		s.WriteString(`<section class="hero"><div class="wrap"><div><h1 class="big">` + text("hero.h1_pre") + ` <em>` + text("hero.h1_accent") + `</em></h1>`)
-		s.WriteString(`<p class="lede">` + text(p.Lead) + `</p><div class="cta"><a class="btn btn--primary btn--lg" href="/generate">` + text("hero.cta_qr") + `</a><a class="btn btn--outline btn--lg" href="/split">` + text("hero.cta_split") + `</a></div>`)
+		s.WriteString(`<p class="lede">` + text(p.Lead) + `</p><div class="cta"><a class="btn btn--primary btn--lg" href="` + href("/generate") + `">` + text("hero.cta_qr") + `</a><a class="btn btn--outline btn--lg" href="` + href("/split") + `">` + text("hero.cta_split") + `</a></div>`)
 		s.WriteString(`<p class="proof">` + text("hero.proof") + `</p>`)
-		s.WriteString(`<p class="sample-line">` + text("home.sample_pre") + ` <a href="/generate?sample=1">` + text("home.sample_link") + `</a></p></div>`)
+		s.WriteString(`<p class="sample-line">` + text("home.sample_pre") + ` <a href="/generate?sample=1` + strings.Replace(suf, "?", "&amp;", 1) + `">` + text("home.sample_link") + `</a></p></div>`)
 		s.WriteString(`<figure class="hero-art" aria-hidden="true" style="margin:0"><img class="still lt" src="` + brandStillLight + `" alt="" width="380" height="380"><img class="still dk" src="` + brandStillDark + `" alt="" width="380" height="380"></figure></div></section>`)
 		s.WriteString(`<section class="blk"><div class="wrap">`)
 		items("hop-static-list")
@@ -231,7 +343,7 @@ func firstView(p publicPage, text func(...string) string) string {
 	s.WriteString(`<div class="wrap"><nav class="hop-static-links"><ul>`)
 	for _, o := range publicPages {
 		if v := text(o.Nav); v != "" && o.Path != p.Path {
-			s.WriteString(`<li><a href="` + o.Path + `">` + v + `</a></li>`)
+			s.WriteString(`<li><a href="` + href(o.Path) + `">` + v + `</a></li>`)
 		}
 	}
 	s.WriteString(`</ul></nav></div>`)
@@ -273,12 +385,12 @@ func appData(page []byte, origin string) string {
 // crawlers and caches see the truth while the app still mounts and draws its
 // own not-found view. The shell is marked so it is not indexed as a copy of the
 // home page.
-func (a *App) shell(name string, h http.Header) ([]byte, int) {
+func (a *App) shell(name, lang string, h http.Header) ([]byte, int) {
 	route := "/" + name
 	if name == "" || name == "index.html" {
 		route = "/"
 	}
-	if p, ok := a.pages[route]; ok {
+	if p, ok := a.pages[lang][route]; ok {
 		return p, http.StatusOK
 	}
 	if appRoutes[route] {

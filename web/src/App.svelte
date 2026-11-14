@@ -4,7 +4,7 @@
   import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly, signInHref } from './lib/account.svelte';
   import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
-  import { readTheme as readThemePref, saveTheme, saveLang, browserCtx } from './lib/prefs.js';
+  import { readTheme as readThemePref, saveTheme, saveLang, langFromQuery, browserCtx } from './lib/prefs.js';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
@@ -53,7 +53,10 @@
   // the address search engines should keep for this page, and no index for the signed-in page
   $effect(() => {
     const p = known(route.path) ? route.path : '/';
-    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p));
+    // English lives at the bare address; a page asked for in another language has its own (?lang=, as the server wrote it)
+    const q = langFromQuery(location.search);
+    void locale;
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p) + (q && q !== 'en' ? '?lang=' + q : ''));
     let robots = document.querySelector('meta[name="robots"]');
     if (route.path === '/account') {
       if (!robots) {
@@ -81,6 +84,13 @@
     });
   });
 
+  // an address that names its language follows the reader's new choice, so a shared or bookmarked link says what the page shows
+  function keepLangInAddress(l: string) {
+    if (langFromQuery(location.search) === null) return;
+    const u = new URL(location.href);
+    u.searchParams.set('lang', l);
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
   const code = (l: string) => l.split('-')[0].toUpperCase();
   function openLang() {
     langOpen = true;
@@ -178,7 +188,7 @@
     {#if langOpen}
       <div class="menu-pop" id="langPop" role="listbox" aria-label={t('top.language')} tabindex="-1" bind:this={langList} onkeydown={onLangKey}>
         {#each LOCALES as l}
-          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
+          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); keepLangInAddress(l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
         {/each}
       </div>
     {/if}

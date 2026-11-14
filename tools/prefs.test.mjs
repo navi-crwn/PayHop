@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { readTheme, saveTheme, readLang, saveLang, cookieDomain, readCookie } from '../web/src/lib/prefs.js';
+import { readTheme, saveTheme, readLang, saveLang, cookieDomain, readCookie, langFromQuery } from '../web/src/lib/prefs.js';
 
 const themeJs = readFileSync(new URL('../web/public/theme.js', import.meta.url), 'utf8');
 
@@ -87,4 +87,9 @@ test('language: cookie, then the old key, never an unsupported value; picking wr
   assert.equal(f.doc.writes[0], 'hop_lang=zh-CN; path=/; max-age=31536000; SameSite=Lax; domain=.hel.ink; Secure');
   assert.equal(f.store.get('hop-lang'), 'zh-CN');
   assert.equal(readCookie('a=1; hop_lang=ja', 'hop_lang'), 'ja');
+});
+
+test('language in the address: ?lang= names one of the nine (any case, pt and zh for the two with a region); anything else is none', () => {
+  for (const [q, want] of [['?lang=de', 'de'], ['?lang=DE', 'de'], ['?a=1&lang=ja&b=2', 'ja'], ['?lang=pt-BR', 'pt-BR'], ['?lang=pt', 'pt-BR'], ['?lang=zh', 'zh-CN'], ['?lang=zh-cn', 'zh-CN'], ['?lang=en', 'en'],
+    ['?lang=xx', null], ['?lang=ar', null], ['?lang=', null], ['', null], [undefined, null], ['?sample=1', null]]) assert.equal(langFromQuery(q), want, String(q));
 });

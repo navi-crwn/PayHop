@@ -169,6 +169,28 @@ try {
     check('announcement: a failing server means no card and no page error', errs.length === 0 && (await bp.locator('#announce').count()) === 0);
     await broke.close();
   }
+  // ---- one address per language: ?lang= in the address picks the language, the canonical follows, the menu keeps them in step ----
+  {
+    const canonical = (page) => page.evaluate(() => document.querySelector('link[rel="canonical"]')?.getAttribute('href'));
+    const { ctx, page } = await open({ width: 1024, path: '/generate?lang=de', member: false });
+    await page.waitForTimeout(400);
+    check('lang: /generate?lang=de shows German, sets <html lang> and the hop_lang cookie', await page.evaluate(() => document.documentElement.lang) === 'de' && (await ctx.cookies()).some((c) => c.name === 'hop_lang' && c.value === 'de'));
+    check('lang: its canonical is the German address', (await canonical(page)) === 'https://pay.hel.ink/generate?lang=de', String(await canonical(page)));
+    await page.click('#langBtn');
+    await page.click('#langPop [role="option"]:has(.code:text-is("es"))');
+    await page.waitForTimeout(300);
+    check('lang: picking Spanish in the menu moves the address and the canonical to ?lang=es', page.url().endsWith('/generate?lang=es') && (await canonical(page)) === 'https://pay.hel.ink/generate?lang=es', page.url() + ' ' + (await canonical(page)));
+    await page.click('header.top nav a[href="/split"]');
+    await page.waitForTimeout(300);
+    check('lang: following a link inside the app keeps Spanish (the cookie) and gives the bare split address as canonical', (await page.evaluate(() => document.documentElement.lang)) === 'es' && (await canonical(page)) === 'https://pay.hel.ink/split', String(await canonical(page)));
+    await ctx.close();
+    for (const [q, want] of [['?lang=en', 'https://pay.hel.ink/split'], ['?lang=xx', 'https://pay.hel.ink/split'], ['?lang=pt', 'https://pay.hel.ink/split?lang=pt-BR']]) {
+      const c = await open({ width: 1024, path: '/split' + q, member: false });
+      await c.page.waitForTimeout(300);
+      check('lang: /split' + q + ' has the canonical ' + want, (await canonical(c.page)) === want, String(await canonical(c.page)));
+      await c.ctx.close();
+    }
+  }
 } catch (e) {
   results.push(false);
   console.error('browser: ' + (e?.stack ?? e));

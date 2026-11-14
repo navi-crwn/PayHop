@@ -1,7 +1,7 @@
-// H-22: every public page has a canonical address and is in sitemap.xml; the signed-in page is not.
+// H-22: every public page has a canonical address and is in the sitemap the server writes; the signed-in page is not.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const router = rd('web/src/lib/router.svelte.ts');
@@ -11,11 +11,11 @@ test('index.html carries the canonical address of the home page', () => {
   assert.match(rd('web/index.html'), /<link rel="canonical" href="https:\/\/pay\.hel\.ink\/">/);
 });
 
-test('sitemap.xml lists every public route once, and not /account', () => {
-  const locs = [...rd('web/public/sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  const want = routes.filter((r) => r !== '/account').map((r) => 'https://pay.hel.ink' + (r === '/' ? '/' : r));
-  assert.deepEqual([...locs].sort(), [...want].sort());
-  assert.equal(new Set(locs).size, locs.length);
+test('sitemap.xml is written by the server (pages.go) from the public pages, which are exactly the routes but /account', () => {
+  assert.ok(!existsSync(new URL('../web/public/sitemap.xml', import.meta.url)), 'a static sitemap.xml would hide the one with the language alternates');
+  const go = rd('internal/app/pages.go');
+  const pages = [...go.slice(go.indexOf('var publicPages'), go.indexOf('var privatePrefixes')).matchAll(/Path: "([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual([...pages].sort(), routes.filter((r) => r !== '/account').sort());
   // pages.go answers every other extension-less address with a real 404; only ROUTES stays 200
   assert.ok(routes.includes('/account'), '/account stays a route of the app: pages.go serves it the bare shell with a 200');
 });
