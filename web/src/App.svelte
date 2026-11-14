@@ -219,6 +219,10 @@
   {/if}
 {/snippet}
 
+{#snippet partOf()}
+  <div class="ft-part"><img src={FAMILY.find((f) => f.slug === "hub")?.mark} alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
+{/snippet}
+
 {#if dash}
   <div class="dash">
     <aside class="side" class:open={sideOpen} aria-label={t('side.menu')}>
@@ -246,13 +250,14 @@
           <li><a href="/changelog">{t('nav.changelog')}</a></li>
         </ul>
       </nav>
+      {@render partOf()}
     </aside>
     <main class="dash-main">{@render page()}</main>
   </div>
 {:else}
   <main>{@render page()}</main>
   <footer class="ft" id="footer"><div class="wrap">
-    <div class="ft-part"><img src={FAMILY.find((f) => f.slug === "hub")?.mark} alt="" width="20" height="20"><span>{t('ft.part')} <a href={HUB} rel="noopener">Hop Easy Link</a></span></div>
+    {@render partOf()}
     <div class="ft-cols">
       <div class="ft-brand"><a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
       <div><h2 class="ft-h">{t('ft.support')}</h2><ul>

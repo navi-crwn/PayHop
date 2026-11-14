@@ -322,6 +322,9 @@ section.blk { padding: 56px 0; }
 .side a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .side a img { width: 18px; height: 18px; image-rendering: pixelated; }
 .side .links { margin-top: auto; }
+.side .ft-part { padding: 8px 10px 0; margin-top: -8px; }
+.side .ft-part a { display: inline; height: auto; padding: 0; font-size: inherit; font-weight: 400; }
+.side .ft-part a:hover { background: none; text-decoration: underline; }
 .side .links a { color: var(--muted); font-weight: 400; font-size: 13px; height: 30px; }
 .dash-main { min-width: 0; }
 .dash-main .page { padding-top: 28px; }
@@ -378,7 +381,7 @@ dialog.confirm .actions { justify-content: flex-end; }
 
 @media (max-width: 1024px) {
   .dash { grid-template-columns: 1fr; }
-  .side { position: fixed; inset: 56px 0 0 0; z-index: 25; height: auto; background: var(--bg); transform: translateX(-100%); transition: transform .2s ease; width: min(300px, 86vw); border-right: 1px solid var(--line); }
+  .side { position: fixed; align-self: stretch; inset: 56px 0 0 0; z-index: 25; height: auto; background: var(--bg); transform: translateX(-100%); transition: transform .2s ease; width: min(300px, 86vw); border-right: 1px solid var(--line); }
   .side.open { transform: none; }
   .menu-btn { display: inline-flex; }
   .cl li { grid-template-columns: 1fr; gap: 2px; }
