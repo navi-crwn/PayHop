@@ -30,12 +30,13 @@
     links[i]?.focus();
     e.preventDefault();
   }
+  // capture phase: the language button stops its own click from bubbling, and that must still close this list
   function onDocClick(e: MouseEvent) {
     if (box?.open && !box.contains(e.target as Node)) close();
   }
 </script>
 
-<svelte:document onclick={onDocClick} onkeydown={onKey} />
+<svelte:document onclickcapture={onDocClick} onkeydown={onKey} />
 
 <details class="family-switcher" bind:this={box}>
   <summary class="btn btn--sm btn--outline btn--icon" aria-label={i18n.t('side.family')} title={i18n.t('side.family')}><Icon name="grid" /></summary>
