@@ -1,134 +1,173 @@
 {
-  "schema": 1,
+  "schema": 2,
   "sources": {
-    "PayHop": "daa4a0442095ea4aa8bfe430b837e5fb51072a6c"
+    "PayHop": "0.0.5"
   },
   "entries": [
     {
-      "kind": "commit",
-      "date": "2026-11-10T23:46:22+07:00",
-      "title": "Merge pull request #2: Fix npm test on Node 22 (CI failed on main after the first PayHop merge)",
-      "url": "https://github.com/navi-crwn/PayHop/commit/daa4a0442095ea4aa8bfe430b837e5fb51072a6c",
-      "id": "daa4a044",
+      "kind": "tag",
+      "date": "2026-11-14T00:00:00Z",
+      "title": "Family menu and a calmer dashboard",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.5",
+      "id": "v0.0.5",
       "app": "PayHop",
-      "repo": "PayHop"
+      "repo": "PayHop",
+      "version": "0.0.5",
+      "summary": "",
+      "items": [
+        {
+          "type": "added",
+          "where": "Top bar on public pages",
+          "text": "A small grid button now opens a list of the other HOP apps, starting with HOP ID, so you can jump to them without scrolling to the footer. Before, the top bar had no shortcut to the other apps. Once you are signed in, the same list is in the sidebar of your dashboard instead."
+        },
+        {
+          "type": "added",
+          "where": "Dashboard",
+          "text": "An announcement from the site owner can now appear as a card at the top of your dashboard, with a Close button. A closed announcement stays hidden for a week. When there is no announcement, nothing is shown and no empty space is left. This gives every HOP dashboard a place for news."
+        },
+        {
+          "type": "changed",
+          "where": "Dashboard sidebar",
+          "text": "The line \"Part of Hop Easy Link\" is now the last line at the bottom of the sidebar, and the sidebar on a phone reaches the bottom of the screen. Before, the line only existed in the public page footer, so it was missing from the dashboard."
+        },
+        {
+          "type": "changed",
+          "where": "Logo and Back button",
+          "text": "If you are signed in, the PayHop logo and the Back button on a page that does not exist now take you to your dashboard instead of the public home page. Visitors who are not signed in still go to the home page. People signed in kept landing on the public page and had to find their way back."
+        },
+        {
+          "type": "changed",
+          "where": "Terms, Privacy and Changelog",
+          "text": "If you are signed in, these pages now open inside your dashboard, with the sidebar around them, so there is always a way back. Visitors and search engines still see them as public pages."
+        },
+        {
+          "type": "changed",
+          "where": "Top bar on phones",
+          "text": "On a 375 pixel wide phone the top bar no longer runs past the right edge, in any of the nine languages: the language button shows only its globe on small screens, and the menus open fully on the screen. Reported by the site owner."
+        },
+        {
+          "type": "changed",
+          "where": "Changelog page",
+          "text": "The changelog now lists one plain-language entry per release, grouped as added, changed, fixed and so on, with a Technical details link to the full notes. Before, it listed raw code changes, which most people could not read. The page is written from this file and checked by the automatic tests."
+        }
+      ]
     },
     {
-      "kind": "pr",
-      "date": "2026-11-10T16:46:22Z",
-      "title": "Fix npm test on Node 22 (CI failed on main after the first PayHop merge)",
-      "url": "https://github.com/navi-crwn/PayHop/pull/2",
-      "id": "#2",
+      "kind": "tag",
+      "date": "2026-11-14T00:00:00Z",
+      "title": "Honest 404 pages",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.4",
+      "id": "v0.0.4",
       "app": "PayHop",
-      "repo": "PayHop"
+      "repo": "PayHop",
+      "version": "0.0.4",
+      "summary": "",
+      "items": [
+        {
+          "type": "fixed",
+          "where": "Addresses PayHop does not have",
+          "text": "A mistyped address now answers \"not found\" properly instead of showing the app as if the page existed. Search engines and link checkers no longer take such addresses for real pages. Addresses PayHop does own are unchanged."
+        },
+        {
+          "type": "changed",
+          "where": "Behind the scenes",
+          "text": "The automatic tests now run on Windows too, and a test loads the finished app in a real browser and fails on a blank page or an error. Another test keeps the public pages identical for every visitor language, which is why they can be stored safely by shared caches. Nothing changes on screen."
+        }
+      ]
     },
     {
-      "kind": "commit",
-      "date": "2026-11-10T17:33:45+01:00",
-      "title": "Run the unit tests through a small runner that works on Node 20 and 22",
-      "url": "https://github.com/navi-crwn/PayHop/commit/20be1e4ae4b9b4df19e15eb67e9c5f337f477512",
-      "id": "20be1e4a",
+      "kind": "tag",
+      "date": "2026-11-12T00:00:00Z",
+      "title": "Sample data and first view",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.3",
+      "id": "v0.0.3",
       "app": "PayHop",
-      "repo": "PayHop"
+      "repo": "PayHop",
+      "version": "0.0.3",
+      "summary": "",
+      "items": [
+        {
+          "type": "added",
+          "where": "Payment QR and Split a bill",
+          "text": "You can now try the app without any payment details: \"Try with sample data\" fills the generator and \"Load an example bill\" fills the bill splitter. A sample is clearly marked \"SAMPLE: not a real account. Do not pay.\" on the code and on the downloaded picture, and the code itself cannot be paid, so nobody can send money to a made-up account by mistake. Only the SEPA euro format has a sample, because it is the only one with an example that belongs to nobody."
+        },
+        {
+          "type": "added",
+          "where": "Theme and language",
+          "text": "Your choice of light or dark and of language is now remembered across the HOP apps, so you do not have to pick it again in each one. It is read before the page appears, so the page does not flash the wrong theme."
+        },
+        {
+          "type": "changed",
+          "where": "Public pages without JavaScript",
+          "text": "Search engines and readers without scripts now get the real first screen of each page, with the same top bar, heading and look as the app, instead of a hidden block of text."
+        },
+        {
+          "type": "changed",
+          "where": "Language",
+          "text": "PayHop now remembers a language only when you pick one, instead of every time a page loads."
+        }
+      ]
     },
     {
-      "kind": "pr",
-      "date": "2026-11-10T16:33:03Z",
-      "title": "Add PayHop: payment QR codes and split bills in the browser",
-      "url": "https://github.com/navi-crwn/PayHop/pull/1",
-      "id": "#1",
+      "kind": "tag",
+      "date": "2026-11-12T00:00:00Z",
+      "title": "Sign-in landing",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.2",
+      "id": "v0.0.2",
       "app": "PayHop",
-      "repo": "PayHop"
+      "repo": "PayHop",
+      "version": "0.0.2",
+      "summary": "",
+      "items": [
+        {
+          "type": "changed",
+          "where": "Sign in",
+          "text": "Opening PayHop from the HOP ID launcher now lands you on your account page, already signed in, and the Sign in button on any page brings you back to that page. Another account signing in after you sign out sees nothing of yours."
+        }
+      ]
     },
     {
-      "kind": "commit",
-      "date": "2026-11-10T23:33:02+07:00",
-      "title": "Merge pull request #1: Add PayHop: payment QR codes and split bills in the browser",
-      "url": "https://github.com/navi-crwn/PayHop/commit/9a48d6033914dc370fc290da1c67d4807d2bd268",
-      "id": "9a48d603",
+      "kind": "tag",
+      "date": "2026-11-11T00:00:00Z",
+      "title": "First release",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.1",
+      "id": "v0.0.1",
       "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:27:21+01:00",
-      "title": "Fix Docker build of the changelog snapshot, record format decisions in the wallet matrix",
-      "url": "https://github.com/navi-crwn/PayHop/commit/ae1f36a378503e3ffc2c113c7b661d18f70bbe50",
-      "id": "ae1f36a3",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:26:18+01:00",
-      "title": "Strict amount parser shared by generator and split, cleaner names, format fixes, terms and privacy pages, Clean style, installer scripts",
-      "url": "https://github.com/navi-crwn/PayHop/commit/3f952c6913141195c45a03a68cde3454eee99d3e",
-      "id": "3f952c69",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:21:23+01:00",
-      "title": "Require ticket aud, re-check stale sessions quietly through the hub, keep clipped text valid UTF-8",
-      "url": "https://github.com/navi-crwn/PayHop/commit/2ef5714a6a455ccdf8c55539183e82f7744328fd",
-      "id": "2ef5714a",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:12:44+01:00",
-      "title": "Dev hub stub for local sign-in tests, full-width dashboard top bar",
-      "url": "https://github.com/navi-crwn/PayHop/commit/e255b251473368ee78e1bb1df191eabf390d555b",
-      "id": "e255b251",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:07:28+01:00",
-      "title": "Add docs, README in nine languages, changelog snapshot, icons and og image",
-      "url": "https://github.com/navi-crwn/PayHop/commit/32d163011382c647adbc8072625f6c16eb54eb85",
-      "id": "32d16301",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T17:02:25+01:00",
-      "title": "Add Svelte shell, home, generator, split, 9 languages, offline worker",
-      "url": "https://github.com/navi-crwn/PayHop/commit/dadba6f5f01dc2d47f8c51bf5af225ddca71b15c",
-      "id": "dadba6f5",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T16:52:51+01:00",
-      "title": "Add hop-pay library with tests",
-      "url": "https://github.com/navi-crwn/PayHop/commit/55281690175da781adc09b4d398852403c42ccc0",
-      "id": "55281690",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T16:50:50+01:00",
-      "title": "Add Go server: healthz, CSP without CDN, HOP ID sign-in and /hop/* protocol",
-      "url": "https://github.com/navi-crwn/PayHop/commit/2f50fa4b944b84058b736220c874ccab12fa4560",
-      "id": "2f50fa4b",
-      "app": "PayHop",
-      "repo": "PayHop"
-    },
-    {
-      "kind": "commit",
-      "date": "2026-11-10T16:48:42+01:00",
-      "title": "Add license and readme",
-      "url": "https://github.com/navi-crwn/PayHop/commit/6c5c26010999b17dd60d95af2e981d2f2fddcece",
-      "id": "6c5c2601",
-      "app": "PayHop",
-      "repo": "PayHop"
+      "repo": "PayHop",
+      "version": "0.0.1",
+      "summary": "The first release: payment QR codes and a bill splitter that run in your browser, with accounts that can keep payment methods and bills, part of the HOP family.",
+      "items": [
+        {
+          "type": "added",
+          "where": "Payment QR",
+          "text": "Make a payment QR code for PayPal.me, Cash App, Venmo, Solana Pay, UPI, EPC SEPA, PromptPay and VietQR. The receiver name is required, shown next to the code and printed under it, and a tick is needed before download, so a wrong code is less likely to be paid. Every format says it has not been tested in a wallet yet, because that is true."
+        },
+        {
+          "type": "added",
+          "where": "Split a bill",
+          "text": "Add who was there, what each item cost and who shared it; taxes and tips are spread by what each person ordered and the shares add up exactly."
+        },
+        {
+          "type": "added",
+          "where": "Account page",
+          "text": "Signed in with your HOP ID, you can keep up to 20 payment methods and the last 200 bills. They are stored encrypted, only when you tick a box for each one, and you can delete one or all at any time. Without that choice nothing is saved."
+        },
+        {
+          "type": "added",
+          "where": "Nine languages and both themes",
+          "text": "English, Chinese, German, Indonesian, Japanese, Portuguese, Spanish, French and Russian, light and dark, with a calm static page for people who prefer reduced motion. It works offline after the first visit."
+        },
+        {
+          "type": "added",
+          "where": "Search engines and privacy",
+          "text": "Each page has its own address for search engines, the signed-in page is kept out of search results, and the privacy and terms pages say plainly what is stored."
+        },
+        {
+          "type": "fixed",
+          "where": "Downloaded picture",
+          "text": "The receiver name printed on the picture is cut at a whole character, never in the middle of an emoji."
+        }
+      ]
     }
   ]
 }

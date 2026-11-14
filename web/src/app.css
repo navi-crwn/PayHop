@@ -374,6 +374,15 @@ dialog.confirm .actions { justify-content: flex-end; }
 .cl a:hover { text-decoration: underline; }
 .cl .id { font: 12px var(--mono); color: var(--muted); }
 .cl-more { margin-top: 16px; }
+.rels { display: grid; gap: 16px; max-width: 52rem; }
+.rel .rel-meta { display: flex; gap: 12px; align-items: baseline; font: 12px var(--mono); color: var(--muted); }
+.rel h2 { margin: 6px 0 10px; font-size: 20px; letter-spacing: -.01em; }
+.rel h3 { margin: 16px 0 6px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.rel ul { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: 8px; font-size: 14px; line-height: 1.55; }
+.rel .rel-sum { color: var(--muted); font-size: 14px; }
+.rel-more { display: inline-block; margin-top: 16px; font-size: 13px; color: var(--accent); text-decoration: none; }
+.rel-more:hover { text-decoration: underline; }
+.rel-old { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .nf { padding: 96px 0; text-align: center; display: grid; gap: 18px; justify-items: center; }
 .nf h1 { font-size: 30px; letter-spacing: -.02em; }
 .ft-copy { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: right; }
