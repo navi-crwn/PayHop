@@ -4,6 +4,22 @@ What changed in PayHop, newest release first. Each entry says what changed, wher
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-11-14 - The family dashboard frame, colours and language addresses
+
+### Added
+- **Dashboard sidebar.** A new "Colours" choice at the bottom of the sidebar lets you pick Classic, Mist or Sand, with a small colour sample for each. Your choice is remembered and written to a cookie shared by the HOP apps, so the other apps can follow it as they get the same choice. Before, the dashboard had one fixed colour. This is a first trial of one look for the whole family, and only the dashboard changes; the public pages stay as they were.
+- **Dashboard sidebar.** The links at the bottom now also include GitHub and Announcement, in the same order as in the other HOP apps (Help, Terms, Privacy, Changelog, GitHub, Announcement). Before, the list stopped at Changelog, so the apps did not match.
+- **Public pages in every language.** Each public page now has its own address in each of the nine languages, for example the German Payment QR page ends in a language marker, and every page tells search engines about its other languages. A shared link now opens the page in the language it was shared in, and the page can be found in all nine languages. Before, there was one address and the language was chosen only in your browser.
+
+### Changed
+- **Dashboard look.** The signed-in pages now have the same frame as the other HOP dashboards: a floating sidebar card with the app name, the menu, the HOP family and the links, and a floating bar above the page with the page name, the Payment QR button, language, theme and your account. Before, PayHop had flat panels that looked different from the other apps. On phones the sidebar opens as a drawer over a dimmed page.
+- **Payment QR on phones.** On a phone or tablet the code now appears right under the form, and the "Save this method" card sits below it, folded under its title until you tap it. Before, the code was far down the page, below the save card, and the page was about twice as long. On a wide screen nothing moves.
+- **Dashboard announcement.** The announcement card at the top of the dashboard now shows what the site owner publishes for all HOP apps, so one announcement reaches every app. The title opens the full announcement, a closed announcement stays hidden for a week, and a critical notice cannot be closed. When there is nothing to show, or the announcements cannot be reached, no card appears and the dashboard loads as fast as before. Before, the list lived inside PayHop and was always empty.
+
+### Fixed
+- **Admin console.** The "sign out everywhere" action offered for a PayHop account now works: it ends that person's sessions here and nothing else. Before, the control center listed the action but PayHop answered that it did not exist, so it did nothing.
+- **Payment QR page on narrow phones.** A long button label, such as "Save this bill to my history" in German or French, no longer makes the page wider than the screen; the label wraps onto a second line. Before, the page could be scrolled sideways.
+
 ## [0.0.5] - 2026-11-14 - Family menu and a calmer dashboard
 
 ### Added
@@ -54,7 +70,8 @@ The first release: payment QR codes and a bill splitter that run in your browser
 ### Fixed
 - **Downloaded picture.** The receiver name printed on the picture is cut at a whole character, never in the middle of an emoji.
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/navi-crwn/PayHop/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/navi-crwn/PayHop/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/navi-crwn/PayHop/compare/v0.0.2...v0.0.3

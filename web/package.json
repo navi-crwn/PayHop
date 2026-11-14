@@ -1,7 +1,7 @@
 {
   "name": "payhop",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "description": "PayHop: payment QR codes and split bills in your browser.",
   "scripts": {

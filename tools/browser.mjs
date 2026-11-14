@@ -211,6 +211,89 @@ try {
       await ctx.close();
     }
   }
+  // ---- the family colour set picker (cookie hop_palette, attribute data-palette) and its contrast ----
+  {
+    const ann = { id: '12', level: 'info', title: 'Planned maintenance', body: 'Sunday 02:00 UTC.', url: 'https://hel.ink/announcements/12' };
+    const attrs = (page) => page.evaluate(() => ({ pal: document.documentElement.dataset.palette ?? null, theme: document.documentElement.dataset.theme }));
+    const cookie = async (ctx, name) => (await ctx.cookies()).find((c) => c.name === name)?.value ?? null;
+    let { ctx, page } = await open({ width: 1440, announcement: ann });
+    check('palette: classic is the default: no attribute, three choices, Classic ticked', (await attrs(page)).pal === null && await page.evaluate(() => [...document.querySelectorAll('.pal-opt')].map((b) => b.dataset.pal + ':' + b.getAttribute('aria-checked')).join() === 'classic:true,mist:false,sand:false'));
+    const before = await page.evaluate(() => getComputedStyle(document.querySelector('.shell-top a.btn--primary')).backgroundColor);
+    await page.click('.pal-opt[data-pal="mist"]');
+    const a1 = await attrs(page);
+    check('palette: choosing Mist writes hop_palette=mist and data-palette="mist", and leaves data-theme alone', (await cookie(ctx, 'hop_palette')) === 'mist' && a1.pal === 'mist' && a1.theme === 'light', JSON.stringify(a1));
+    await page.waitForTimeout(350);
+    check('palette: the colour really changes', await page.evaluate((b) => getComputedStyle(document.querySelector('.shell-top a.btn--primary')).backgroundColor !== b, before));
+    await page.reload();
+    await page.waitForSelector('.shell-side', { state: 'attached' });
+    check('palette: after a reload it stays (the first-paint script sets the attribute) and Mist is ticked', (await attrs(page)).pal === 'mist' && (await page.evaluate(() => document.querySelector('.pal-opt[aria-checked="true"]').dataset.pal)) === 'mist');
+    await page.focus('.pal-opt[aria-checked="true"]');
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(100);
+    check('palette: the arrow keys move the choice and the focus (Mist to Sand)', (await attrs(page)).pal === 'sand' && (await page.evaluate(() => document.activeElement?.dataset?.pal)) === 'sand' && (await cookie(ctx, 'hop_palette')) === 'sand');
+    await page.keyboard.press('Home');
+    await page.waitForTimeout(100);
+    check('palette: Home returns to Classic (the attribute is removed, the cookie says classic)', (await attrs(page)).pal === null && (await cookie(ctx, 'hop_palette')) === 'classic');
+    check('palette: the picker is at the foot of the sidebar, above the links', await page.evaluate(() => { const p = document.querySelector('.pal').getBoundingClientRect(), f = document.querySelector('.shell-side-foot').getBoundingClientRect(), n = document.querySelectorAll('.shell-side .shell-nav')[1].getBoundingClientRect(); return p.top >= n.bottom - 1 && p.bottom <= f.top + 1; }));
+    await ctx.close();
+    for (const junk of ['purple', 'MIST', '']) {
+      const c = await open({ width: 1440, cookies: [{ name: 'hop_palette', value: junk }] });
+      check(`palette: a cookie of "${junk}" is classic`, (await attrs(c.page)).pal === null);
+      await c.ctx.close();
+    }
+    // public pages stay classic (the colour set is for the dashboard in this stage)
+    const pub = await open({ width: 1440, path: '/generate', member: false, cookies: [{ name: 'hop_palette', value: 'sand' }, { name: 'hop_palette_depth', value: 'surface' }] });
+    const pubBg = await pub.page.evaluate(() => [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.querySelector('.btn--primary, .card')).backgroundColor].join());
+    const pubRef = await open({ width: 1440, path: '/generate', member: false });
+    check('palette: a guest page looks the same with a cookie of sand and the surface trial as without', pubBg === (await pubRef.page.evaluate(() => [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.querySelector('.btn--primary, .card')).backgroundColor].join())), pubBg);
+    await pub.ctx.close(); await pubRef.ctx.close();
+
+    // contrast: text and the primary button, every set, light and dark, both depths
+    const lum = (rgb) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
+    const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    const PAIRS = [
+      ['primary button', '.shell-top a.btn--primary', 'self'],
+      ['heading on the page', '.page-head h1', 'body'],
+      ['muted text on the page', '.page-head p', 'body'],
+      ['heading on a card', '.cards .card h2', '.cards .card'],
+      ['muted text on a card', '.cards .card p', '.cards .card'],
+      ['current menu item', '.shell-nav a[aria-current="page"]', 'self'],
+      ['menu item', '.shell-nav a:not([aria-current])', '.shell-side'],
+      ['footer link', '.shell-side-foot a', '.shell-side'],
+      ['link in the announcement', '#announce a', '#announce'],
+      ['chip on a card', '.chip--brand', 'self'],
+      ['ticked colour choice', '.pal-opt[aria-checked="true"]', 'self'],
+      ['colour choice', '.pal-opt[aria-checked="false"]', '.shell-side']
+    ];
+    const worst = [];
+    for (const pal of ['classic', 'mist', 'sand']) for (const scheme of ['light', 'dark']) for (const depth of ['accent', 'surface']) {
+      if (pal === 'classic' && depth === 'surface') continue;
+      const ck = [{ name: 'hop_palette', value: pal }, ...(depth === 'surface' ? [{ name: 'hop_palette_depth', value: 'surface' }] : [])];
+      const c = await open({ width: 1440, scheme, cookies: ck, announcement: ann });
+      await c.page.waitForSelector('#announce');
+      const got = await c.page.evaluate((pairs) => {
+        const cv = document.createElement('canvas'); cv.width = cv.height = 1;
+        const g = cv.getContext('2d', { willReadFrequently: true });
+        const px = (css) => { g.clearRect(0, 0, 1, 1); g.fillStyle = '#000'; g.fillStyle = css; g.fillRect(0, 0, 1, 1); return [...g.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+        const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; if (b && !/rgba\(\s*0,\s*0,\s*0,\s*0\)|transparent/.test(b)) return b; } return getComputedStyle(document.body).backgroundColor; };
+        return pairs.map(([name, sel, bgSel]) => {
+          const el = document.querySelector(sel);
+          if (!el) return [name, null, null];
+          const bg = bgSel === 'self' ? bgOf(el) : bgSel === 'body' ? getComputedStyle(document.body).backgroundColor : bgOf(document.querySelector(bgSel));
+          return [name, px(getComputedStyle(el).color), px(bg)];
+        });
+      }, PAIRS);
+      for (const [name, fg, bg] of got) {
+        if (!fg) { check(`contrast ${pal}/${depth}/${scheme}: ${name} exists`, false); continue; }
+        const r = ratio(fg, bg);
+        worst.push([r, `${pal}/${depth}/${scheme} ${name}`]);
+        check(`contrast ${pal}/${depth}/${scheme}: ${name} ${r.toFixed(2)}:1 (at least 4.5)`, r >= 4.5);
+      }
+      await c.ctx.close();
+    }
+    worst.sort((a, b) => a[0] - b[0]);
+    console.log('lowest contrast ratios: ' + worst.slice(0, 5).map(([r, n]) => `${r.toFixed(2)} ${n}`).join(' | '));
+  }
 } catch (e) {
   results.push(false);
   console.error('browser: ' + (e?.stack ?? e));

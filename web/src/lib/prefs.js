@@ -43,6 +43,20 @@ export function saveTheme({ doc, host, store }, theme) {
   set(store, 'hop-theme', theme);
 }
 
+export const PALETTES = ['classic', 'mist', 'sand'];
+
+/** The family colour set, from cookie hop_palette (the same cookie rule as hop_theme, written only by scripts, never read by a server):
+ *  classic (the default, also for no cookie or a value nobody knows), mist or sand. */
+export function readPalette({ doc }) {
+  const c = readCookie(doc.cookie, 'hop_palette');
+  return c !== null && PALETTES.includes(c) ? c : 'classic';
+}
+
+/** Every control that changes the colour set calls this. */
+export function savePalette({ doc, host }, palette) {
+  writeCookie(doc, host, 'hop_palette', PALETTES.includes(palette) ? palette : 'classic');
+}
+
 /** The language a ?lang= address names (the server writes that language into the page, internal/app/pages.go pageLang):
  *  one of the nine, in any case, pt or zh for the two with a region; null when there is none or it is not supported. */
 export function langFromQuery(search) {

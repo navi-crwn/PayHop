@@ -340,12 +340,25 @@ section.blk { padding: 56px 0; }
 .shell-nav a[aria-current="page"] { background: var(--panel2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
 .shell-nav a[aria-current="page"] .ico { color: var(--accent); }
 .shell-label { margin: 14px 12px 6px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.shell-side-foot { margin: auto 0 0; padding: 12px 0 4px; border-top: 1px solid var(--line); }
+.shell-side-foot { margin: 0; padding: 12px 0 4px; border-top: 1px solid var(--line); }
 .shell-side-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .shell-side-foot a { display: flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; color: var(--muted); font-size: 13px; text-decoration: none; }
 .shell-side-foot a:hover, .shell-side-foot a[aria-current="page"] { color: var(--text); }
 .shell-side .ft-part { margin: 6px 0 0; padding: 4px 12px 2px; }
 .shell-side .ft-part a { color: var(--text); }
+/* the colour set picker (the family's, cookie hop_palette): three small swatches with their names, at the foot of the sidebar above the links */
+.pal { margin-top: auto; padding-bottom: 10px; }
+.pal .shell-label { margin-top: 4px; }
+.pal-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0 2px; }
+.pal-opt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; height: 52px; min-width: 0; padding: 0 4px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--muted); font: 500 12px/1.2 var(--sans); cursor: pointer; }
+.pal-opt span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-opt:hover { background: var(--panel2); color: var(--text); }
+.pal-opt[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.pal-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw { width: 16px; height: 16px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .14); }
+.sw-classic { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.sw-mist { background: linear-gradient(135deg, #4f5bd5, #86c8f3); }
+.sw-sand { background: linear-gradient(135deg, #b4532a, #ea9fb0); }
 .shell-body { margin-inline-start: var(--side); min-height: 100vh; display: flex; flex-direction: column; min-width: 0; }
 .shell-top { position: sticky; top: 12px; z-index: 40; display: flex; align-items: center; gap: 8px; margin: 12px 12px 0; padding: 0 10px; height: 56px; border: 1px solid var(--line); border-radius: 18px;
   background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(10px); }
@@ -530,3 +543,17 @@ dialog.confirm .actions { justify-content: flex-end; }
   .top .menu, .shell-top .menu { position: static; }
   .top .menu-pop, .shell-top .menu-pop { right: 12px; }
 }
+
+/* ---------- family colour sets: Mist and Sand (the same values in every HOP app; classic is no attribute and no rule here) ----------
+   Only the dashboard: the rules need .shell on the page, so the public pages stay classic. Depth (a) = the accent only. */
+:root[data-palette="mist"]:has(.shell) { --accent: #3f4fc4; --accent-ink: #ffffff; --brand: #4f5bd5; --violet: #4f5bd5; --accent-soft: color-mix(in srgb, #3f4fc4 11%, var(--panel)); }
+:root[data-palette="mist"][data-theme="dark"]:has(.shell) { --accent: #9aaeff; --accent-ink: #0a1022; --brand: #9aaeff; --violet: #9aaeff; --accent-soft: color-mix(in srgb, #9aaeff 14%, var(--panel)); }
+:root[data-palette="sand"]:has(.shell) { --accent: #a8481f; --accent-ink: #ffffff; --brand: #b4532a; --violet: #b4532a; --accent-soft: color-mix(in srgb, #a8481f 11%, var(--panel)); }
+:root[data-palette="sand"][data-theme="dark"]:has(.shell) { --accent: #f3b48c; --accent-ink: #1b0f0a; --brand: #f3b48c; --violet: #f3b48c; --accent-soft: color-mix(in srgb, #f3b48c 14%, var(--panel)); }
+/* Depth (b), for the gallery only (cookie hop_palette_depth=surface, no control and no text): the surfaces take the set's soft colours too. */
+:root[data-palette="mist"][data-palette-depth="surface"]:has(.shell) { --bg: #f4f6fc; --panel: #ffffff; --panel2: #eef1fa; --line: #dde2f1; }
+:root[data-palette="mist"][data-palette-depth="surface"][data-theme="dark"]:has(.shell) { --bg: #0d1120; --panel: #141a2e; --panel2: #1a2138; --line: #262e4a; }
+:root[data-palette="sand"][data-palette-depth="surface"]:has(.shell) { --bg: #faf6f1; --panel: #ffffff; --panel2: #f5eee6; --line: #ece2d6; }
+:root[data-palette="sand"][data-palette-depth="surface"][data-theme="dark"]:has(.shell) { --bg: #17110d; --panel: #1f1814; --panel2: #271f19; --line: #3a2e25; }
+/* a change of colour set is instant, never animated, and the dashboard is still when motion is reduced */
+@media (prefers-reduced-motion: reduce) { .shell, .shell * { transition: none !important; animation: none !important; } }

@@ -4,7 +4,7 @@
   import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly, signInHref } from './lib/account.svelte';
   import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
-  import { readTheme as readThemePref, saveTheme, saveLang, langFromQuery, browserCtx } from './lib/prefs.js';
+  import { readTheme as readThemePref, saveTheme, saveLang, langFromQuery, readPalette, savePalette, PALETTES, browserCtx } from './lib/prefs.js';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
@@ -41,6 +41,22 @@
     document.cookie = 'hop_ui=' + v + '; path=/; max-age=31536000; SameSite=Lax' + dom;
     if (v === 'clean') document.documentElement.dataset.ui = 'clean';
     else delete document.documentElement.dataset.ui;
+  }
+  // the family colour set (cookie hop_palette, one for every HOP app): classic is no attribute, mist and sand set data-palette
+  let palette = $state<string>(readPalette(browserCtx()));
+  function setPalette(p: string) {
+    palette = p;
+    savePalette(browserCtx(), p);
+    if (p === 'classic') delete document.documentElement.dataset.palette;
+    else document.documentElement.dataset.palette = p;
+  }
+  function onPaletteKey(e: KeyboardEvent) {
+    const i = PALETTES.indexOf(palette);
+    const next = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? (i + 1) % PALETTES.length : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? (i + PALETTES.length - 1) % PALETTES.length : e.key === 'Home' ? 0 : e.key === 'End' ? PALETTES.length - 1 : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    setPalette(PALETTES[next]);
+    queueMicrotask(() => (e.currentTarget as HTMLElement | null)?.parentElement?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus());
   }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
@@ -244,6 +260,14 @@
           <a href={familyHref(f, true, account.hubUrl)} rel="noopener"><img src={f.mark} alt="" width="18" height="18">{f.name}</a>
         {/each}
       </nav>
+      <div class="pal" role="radiogroup" aria-labelledby="palLbl">
+        <p class="shell-label" id="palLbl">{t('palette.label')}</p>
+        <div class="pal-row">
+          {#each PALETTES as p}
+            <button type="button" class="pal-opt" role="radio" aria-checked={palette === p} tabindex={palette === p ? 0 : -1} data-pal={p} onclick={() => setPalette(p)} onkeydown={onPaletteKey}><i class="sw sw-{p}"></i><span>{t('palette.' + p)}</span></button>
+          {/each}
+        </div>
+      </div>
       <nav class="shell-side-foot links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
