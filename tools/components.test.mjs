@@ -149,14 +149,17 @@ test('family picker (public top bar): HOP ID first, every other public app, neve
   assert.ok(member.includes('href="https://hub.example.test/apps/linkhop"'));
 });
 
-test('announcement card: one sample entry draws the card with a labelled close button and its link; the dashboard has none by default', () => {
+test('announcement card: an item from the hub draws a card with a linked title, plain-text body and a labelled close button; no item, no card; critical has no close button', () => {
   reset();
-  const h = html(Announcement, { items: [{ id: 'sample', text: { en: 'Planned maintenance on Sunday.' }, href: 'https://hel.ink/status', link: { en: 'Details' } }] });
+  const item = { id: '12', level: 'info', title: 'Planned maintenance', body: 'Sunday <b>02:00</b> UTC.', url: 'https://hel.ink/announcements/12' };
+  const h = html(Announcement, { item });
   assert.match(h, /id="announce"/);
-  assert.ok(h.includes(">Announcement</b>"));
-  assert.ok(h.includes("Planned maintenance on Sunday."));
+  assert.ok(h.includes('href="https://hel.ink/announcements/12"') && h.includes('>Planned maintenance</a>'));
+  assert.ok(h.includes('Sunday &lt;b>02:00&lt;/b> UTC.'), 'the body is escaped, never drawn as HTML');
+  assert.doesNotMatch(h, /<b>02:00/);
   assert.match(h, /aria-label="Close announcement"/);
-  assert.ok(h.includes('href="https://hel.ink/status"'));
-  assert.doesNotMatch(html(Announcement, { items: [] }), /announce/);
-  assert.doesNotMatch(html(Dashboard), /id="announce"/);
+  assert.doesNotMatch(html(Announcement, { item: null }), /announce/);
+  assert.doesNotMatch(html(Announcement, { item: { ...item, id: '' } }), /announce/);
+  assert.doesNotMatch(html(Announcement, { item: { ...item, level: 'critical' } }), /Close announcement/);
+  assert.doesNotMatch(html(Dashboard), /id="announce"/, 'the dashboard shows no card until the hub has one');
 });

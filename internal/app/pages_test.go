@@ -86,8 +86,8 @@ func TestPublicPagesAreReadableWithoutScripts(t *testing.T) {
 			t.Errorf("%s: title %q is also the title of %s", path, title, other)
 		}
 		titles[title] = path
-		if strings.Contains(body, "hreflang") {
-			t.Errorf("%s: hreflang without one address per language", path)
+		if n := strings.Count(body, `rel="alternate" hreflang=`); n != 10 {
+			t.Errorf("%s: %d hreflang links, want 10 (nine languages and x-default)", path, n)
 		}
 	}
 	for _, p := range publicPages {
@@ -283,12 +283,10 @@ func TestPrivateAndUnknownRoutesAreNotIndexed(t *testing.T) {
 }
 
 func TestSitemapListsEveryPublicPageAndNothingElse(t *testing.T) {
-	b, err := fs.ReadFile(web.Dist(), "sitemap.xml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, b0 := fetchPage(t, builtApp(t).URL+"/sitemap.xml")
+	b := []byte(b0)
 	var got, want []string
-	for _, m := range regexp.MustCompile(`<loc>([^<]+)</loc>`).FindAllStringSubmatch(string(b), -1) {
+	for _, m := range regexp.MustCompile(`<url><loc>([^<]+)</loc>`).FindAllStringSubmatch(string(b), -1) {
 		got = append(got, m[1])
 	}
 	for _, r := range sitemapRoutes() {
@@ -310,11 +308,10 @@ func TestSitemapListsEveryPublicPageAndNothingElse(t *testing.T) {
 	}
 }
 
-// The server writes the first view in English for every visitor; the app picks the language
-// in the browser. That is what lets these pages be answered with Cache-Control: no-cache and
-// no Vary: Cookie (KONTRAK-SEO-BAHASA rule 6.5). If a page ever follows the cookie, the
-// Accept-Language header or ?lang=, this test fails and the page needs Vary: Cookie (rule 6.2).
-func TestPublicPagesDoNotFollowTheVisitorsLanguage(t *testing.T) {
+// The server picks the language of a public page by ?lang= alone: one address, one page, one language, so the
+// answer can stay Cache-Control: no-cache without Vary (KONTRAK-SEO-BAHASA rule 6.5). The cookie and
+// Accept-Language never change the page; if one ever does, the page needs Vary (rule 6.2) and this test fails.
+func TestOnlyTheLangParameterChangesAPublicPage(t *testing.T) {
 	srv := builtApp(t)
 	get := func(path, cookie, accept string) (http.Header, string) {
 		t.Helper()
@@ -338,26 +335,19 @@ func TestPublicPagesDoNotFollowTheVisitorsLanguage(t *testing.T) {
 	}
 	for _, p := range []string{"/", "/generate", "/split", "/changelog", "/terms", "/privacy"} {
 		h, plain := get(p, "", "")
-		if cc := h.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
-			t.Errorf("%s: Cache-Control = %q, want no-cache", p, cc)
+		if cc := h.Get("Cache-Control"); !strings.Contains(cc, "no-cache") || h.Get("Vary") != "" {
+			t.Errorf("%s: Cache-Control %q Vary %q, want no-cache and no Vary", p, cc, h.Get("Vary"))
 		}
-		if plain == "" {
-			t.Errorf("%s: empty body", p)
-		}
-		variants := map[string][3]string{
-			"Cookie hop_lang=id":    {p, "hop_lang=id", ""},
-			"Accept-Language: id":   {p, "", "id"},
-			"?lang=id":              {p + "?lang=id", "", ""},
-			"cookie, header, query": {p + "?lang=id", "hop_lang=id", "id"},
-		}
-		for name, v := range variants {
-			h2, body := get(v[0], v[1], v[2])
-			if body != plain {
+		for name, v := range map[string][3]string{"Cookie hop_lang=id": {p, "hop_lang=id", ""}, "Accept-Language: id": {p, "", "id"}, "?lang=xx (unsupported)": {p + "?lang=xx", "", ""}, "?lang=en": {p + "?lang=en", "", ""}} {
+			if _, body := get(v[0], v[1], v[2]); body != plain && name != "?lang=en" {
 				t.Errorf("%s with %s: the body differs from the plain request", p, name)
 			}
-			if cc := h2.Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
-				t.Errorf("%s with %s: Cache-Control = %q, want no-cache", p, name, cc)
-			}
+		}
+		if _, id := get(p+"?lang=id", "", ""); id == plain {
+			t.Errorf("%s?lang=id is the same page as the English one", p)
+		}
+		if _, id := get(p+"?lang=id", "hop_lang=de", "fr"); id == plain || !strings.Contains(id, `<html lang="id">`) {
+			t.Errorf("%s?lang=id must win over the cookie and the header", p)
 		}
 	}
 }

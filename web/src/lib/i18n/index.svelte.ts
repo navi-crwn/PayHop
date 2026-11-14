@@ -1,5 +1,5 @@
 import en from './en.json';
-import { readLang, browserCtx } from '../prefs.js';
+import { readLang, saveLang, langFromQuery, browserCtx } from '../prefs.js';
 
 /* Nine languages, no Arabic, per the family rule. A missing key falls back to
    English and warns once, so the UI never shows a raw key. `dict` is a $state so
@@ -41,6 +41,12 @@ export function isLocale(v: string): v is Locale {
 }
 
 export function guessLocale(): Locale {
+  // an address that names its language (?lang=de, the one the server wrote the page in) wins, and becomes the reader's choice
+  const asked = langFromQuery(location.search);
+  if (asked && isLocale(asked)) {
+    saveLang(browserCtx(), asked);
+    return asked;
+  }
   // the family choice first: cookie hop_lang, then this app's older localStorage key (lib/prefs.js)
   const chosen = readLang(browserCtx());
   if (chosen && isLocale(chosen)) return chosen;

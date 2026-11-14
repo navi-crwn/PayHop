@@ -26,6 +26,10 @@
   let saveLabel = $state('');
   let saveMsg = $state<{ ok: boolean; text: string } | null>(null);
   let saving = $state(false);
+  // on a phone or tablet the "save" card is folded so the code comes right after the form; on a wide screen it is open and stays open
+  const narrowMq = typeof matchMedia === 'function' ? matchMedia('(max-width: 1024px)') : null;
+  let saveOpen = $state(!narrowMq?.matches);
+  const foldSave = (e: MouseEvent) => { if (!narrowMq?.matches) e.preventDefault(); };
   const canSave = $derived(account.ready && account.signedIn);
   $effect(() => {
     if (canSave && !saved.loaded) void loadSaved();
@@ -168,8 +172,8 @@
 <div class="wrap page">
   <div class="page-head"><h1>{t('gen.title')}</h1><p>{t('gen.sub')}</p></div>
   <div class="two">
-    <div>
-      <div class="card">
+    <div class="col-a">
+      <div class="card" id="formCard">
         <div class="sample-row">
           <button type="button" class="btn btn--outline btn--sm" id="sampleBtn" onclick={loadSample}><Icon name="qr" />{t('gen.sample_btn')}</button>
           {#if sample}<button type="button" class="btn btn--ghost btn--sm" id="sampleClear" onclick={clearSample}>{t('sample.clear')}</button>{/if}
@@ -206,8 +210,8 @@
           {/each}
         </form>
       </div>
-      <div class="card" id="saveCard">
-        <h2>{t('gen.save_title')}</h2>
+      <details class="card fold" id="saveCard" bind:open={saveOpen}>
+        <summary onclick={foldSave}><h2>{t('gen.save_title')}</h2></summary>
         {#if sample}
           {#if canSave && saved.loaded && saved.enabled && saved.methods.length}
             {@render picker()}
@@ -236,10 +240,10 @@
           <p class="hint" style="margin:0 0 12px">{t('gen.save_hint')}</p>
           {#if account.ready && account.sso}<a class="btn btn--outline" id="saveSignin" href={signInHref('/generate')}>{t('top.signin')}</a>{/if}
         {/if}
-      </div>
+      </details>
     </div>
 
-    <div>
+    <div class="col-b">
       <div class="card" aria-live="polite">
         {#if result.ok && qr}
           {@const d = result.out.display}

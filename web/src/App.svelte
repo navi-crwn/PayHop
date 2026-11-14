@@ -4,7 +4,7 @@
   import { account, loadAccount, initials, takeAuthError, takeRecheckMark, recheckQuietly, signInHref } from './lib/account.svelte';
   import { recheckAction } from './lib/recheck.js';
   import { route, startRouter, known } from './lib/router.svelte';
-  import { readTheme as readThemePref, saveTheme, saveLang, browserCtx } from './lib/prefs.js';
+  import { readTheme as readThemePref, saveTheme, saveLang, langFromQuery, readPalette, savePalette, PALETTES, browserCtx } from './lib/prefs.js';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
   import Icon from './lib/Icon.svelte';
@@ -42,6 +42,22 @@
     if (v === 'clean') document.documentElement.dataset.ui = 'clean';
     else delete document.documentElement.dataset.ui;
   }
+  // the family colour set (cookie hop_palette, one for every HOP app): classic is no attribute, mist and sand set data-palette
+  let palette = $state<string>(readPalette(browserCtx()));
+  function setPalette(p: string) {
+    palette = p;
+    savePalette(browserCtx(), p);
+    if (p === 'classic') delete document.documentElement.dataset.palette;
+    else document.documentElement.dataset.palette = p;
+  }
+  function onPaletteKey(e: KeyboardEvent) {
+    const i = PALETTES.indexOf(palette);
+    const next = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? (i + 1) % PALETTES.length : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? (i + PALETTES.length - 1) % PALETTES.length : e.key === 'Home' ? 0 : e.key === 'End' ? PALETTES.length - 1 : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    setPalette(PALETTES[next]);
+    queueMicrotask(() => (e.currentTarget as HTMLElement | null)?.parentElement?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus());
+  }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
     saveTheme(browserCtx(), theme);
@@ -53,7 +69,10 @@
   // the address search engines should keep for this page, and no index for the signed-in page
   $effect(() => {
     const p = known(route.path) ? route.path : '/';
-    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p));
+    // English lives at the bare address; a page asked for in another language has its own (?lang=, as the server wrote it)
+    const q = langFromQuery(location.search);
+    void locale;
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://' + BRAND.host + (p === '/' ? '/' : p) + (q && q !== 'en' ? '?lang=' + q : ''));
     let robots = document.querySelector('meta[name="robots"]');
     if (route.path === '/account') {
       if (!robots) {
@@ -81,6 +100,13 @@
     });
   });
 
+  // an address that names its language follows the reader's new choice, so a shared or bookmarked link says what the page shows
+  function keepLangInAddress(l: string) {
+    if (langFromQuery(location.search) === null) return;
+    const u = new URL(location.href);
+    u.searchParams.set('lang', l);
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
   const code = (l: string) => l.split('-')[0].toUpperCase();
   function openLang() {
     langOpen = true;
@@ -148,6 +174,8 @@
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
+  // the page title the dashboard bar shows (keys that already exist; each page keeps its own heading below)
+  const TITLE: Record<string, string> = { '/account': 'nav.dashboard', '/generate': 'nav.generate', '/split': 'nav.split', '/changelog': 'cl.title', '/terms': 'terms.t', '/privacy': 'priv.t' };
 </script>
 
 <svelte:document onclick={onDocClick} onkeydown={onDocKey} />
@@ -168,18 +196,7 @@
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 </svg>
 
-<header class="top"><div class="wrap" class:full={dash}>
-  {#if dash}<button class="btn btn--sm btn--outline btn--icon menu-btn" style="width:32px" aria-label={t('side.menu')} aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name="menu" /></button>{/if}
-  <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
-  {#if !dash}
-    <nav class="nav" aria-label={t('nav.main')}>
-      <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
-      <a href="/split" aria-current={here('/split')}>{t('nav.split')}</a>
-    </nav>
-  {/if}
-  <span class="sp"></span>
-  {#if dash}<a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>{/if}
-  {#if !dash}<FamilySwitcher />{/if}
+{#snippet tools()}
   <div class="menu" id="langMenu">
     <button class="btn btn--sm btn--outline" id="langBtn" bind:this={langBtn} aria-haspopup="listbox" aria-expanded={langOpen} aria-label={t('top.language')} onclick={(e) => { e.stopPropagation(); langOpen ? closeLang() : openLang(); }}>
       <Icon name="globe" /><span>{code(i18n.locale)}</span>
@@ -187,7 +204,7 @@
     {#if langOpen}
       <div class="menu-pop" id="langPop" role="listbox" aria-label={t('top.language')} tabindex="-1" bind:this={langList} onkeydown={onLangKey}>
         {#each LOCALES as l}
-          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
+          <button type="button" role="option" aria-selected={l === i18n.locale} onclick={() => { locale = l; saveLang(browserCtx(), l); keepLangInAddress(l); closeLang(true); }}><span>{LOCALE_NAMES[l]}</span><span class="code">{l}</span></button>
         {/each}
       </div>
     {/if}
@@ -206,7 +223,7 @@
   {:else if account.ready && account.sso}
     <a class="btn btn--sm btn--outline" id="signin" href={signInHref(path)}>{t('top.signin')}</a>
   {/if}
-</div></header>
+{/snippet}
 
 {#snippet page()}
   {#if path === '/'}<Home />
@@ -229,37 +246,63 @@
 {/snippet}
 
 {#if dash}
-  <div class="dash">
-    <aside class="side" class:open={sideOpen} aria-label={t('side.menu')}>
-      <nav>
-        <h2>{t('side.menu')}</h2>
-        <ul>
-          <li><a href="/account" aria-current={here('/account')}><Icon name="home" />{t('nav.dashboard')}</a></li>
-          <li><a href="/generate" aria-current={here('/generate')}><Icon name="qr" />{t('nav.generate')}</a></li>
-          <li><a href="/split" aria-current={here('/split')}><Icon name="split" />{t('nav.split')}</a></li>
-        </ul>
+  <div class="shell" class:open={sideOpen}>
+    <aside class="shell-side" id="shell-side" aria-label={t('side.menu')}>
+      <a class="shell-brand" href={homeHref}><img src={BRAND.mark} alt="" width="26" height="26"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+      <nav class="shell-nav" aria-label={t('side.menu')}>
+        <a href="/account" aria-current={here('/account')}><Icon name="home" />{t('nav.dashboard')}</a>
+        <a href="/generate" aria-current={here('/generate')}><Icon name="qr" />{t('nav.generate')}</a>
+        <a href="/split" aria-current={here('/split')}><Icon name="split" />{t('nav.split')}</a>
       </nav>
-      <nav>
-        <h2>{t('side.family')}</h2>
-        <ul>
-          {#each others as f}
-            <li><a href={familyHref(f, true, account.hubUrl)} rel="noopener"><img src={f.mark} alt="" width="18" height="18">{f.name}</a></li>
+      <p class="shell-label">{t('side.family')}</p>
+      <nav class="shell-nav" aria-label={t('side.family')}>
+        {#each others as f}
+          <a href={familyHref(f, true, account.hubUrl)} rel="noopener"><img src={f.mark} alt="" width="18" height="18">{f.name}</a>
+        {/each}
+      </nav>
+      <div class="pal" role="radiogroup" aria-labelledby="palLbl">
+        <p class="shell-label" id="palLbl">{t('palette.label')}</p>
+        <div class="pal-row">
+          {#each PALETTES as p}
+            <button type="button" class="pal-opt" role="radio" aria-checked={palette === p} tabindex={palette === p ? 0 : -1} data-pal={p} onclick={() => setPalette(p)} onkeydown={onPaletteKey}><i class="sw sw-{p}"></i><span>{t('palette.' + p)}</span></button>
           {/each}
-        </ul>
-      </nav>
-      <nav class="links">
+        </div>
+      </div>
+      <nav class="shell-side-foot links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
           <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
           <li><a href="/privacy" aria-current={here('/privacy')}>{t('ft.privacy')}</a></li>
           <li><a href="/changelog" aria-current={here('/changelog')}>{t('nav.changelog')}</a></li>
+          <li><a href={REPO} rel="noopener">GitHub</a></li>
+          <li><a href="{HUB}/announcements" rel="noopener">{t('announce.title')}</a></li>
         </ul>
       </nav>
       {@render partOf()}
     </aside>
-    <main class="dash-main">{@render page()}</main>
+    {#if sideOpen}<div class="shell-scrim" onclick={() => (sideOpen = false)} role="presentation"></div>{/if}
+    <div class="shell-body">
+      <header class="shell-top">
+        <button class="btn btn--sm btn--outline btn--icon shell-burger" type="button" style="width:32px" aria-label={t('side.menu')} aria-controls="shell-side" aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name={sideOpen ? 'x' : 'menu'} /></button>
+        <p class="shell-title">{t(TITLE[path] ?? 'nav.dashboard')}</p>
+        <span class="sp"></span>
+        <a class="btn btn--sm btn--primary" href="/generate"><Icon name="qr" /><span class="hide-sm">{t('nav.generate')}</span></a>
+        {@render tools()}
+      </header>
+      <main class="shell-main">{@render page()}</main>
+    </div>
   </div>
 {:else}
+  <header class="top"><div class="wrap">
+    <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+    <nav class="nav" aria-label={t('nav.main')}>
+      <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
+      <a href="/split" aria-current={here('/split')}>{t('nav.split')}</a>
+    </nav>
+    <span class="sp"></span>
+    <FamilySwitcher />
+    {@render tools()}
+  </div></header>
   <main>{@render page()}</main>
   <footer class="ft" id="footer"><div class="wrap">
     {@render partOf()}

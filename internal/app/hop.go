@@ -30,6 +30,7 @@ func (a *App) hopRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /hop/manifest", a.hop(a.hopManifest))
 	m.HandleFunc("GET /hop/stats", a.hop(a.hopStats))
 	m.HandleFunc("GET /hop/users/{sub}", a.hop(a.hopUser))
+	m.HandleFunc("POST /hop/users/{sub}/actions", a.hop(a.hopUserAction))
 	m.HandleFunc("POST /hop/events", a.hop(a.hopEvent))
 	m.HandleFunc("/hop/", a.hop(func(w http.ResponseWriter, r *http.Request, _ []byte) {
 		hopFail(w, http.StatusNotFound, "not_found", "no such endpoint")
@@ -107,7 +108,7 @@ func (a *App) hopManifest(w http.ResponseWriter, r *http.Request, _ []byte) {
 		"app": "payhop", "name": "PayHop", "icon": "qr", "base_url": a.cfg.BaseURL,
 		"capabilities":  []string{"admin_api", "events", "zero_knowledge"},
 		"content_types": []any{},
-		"actions":       map[string]any{"user": []string{"revoke_sessions"}},
+		"actions":       map[string]any{"user": userActions},
 	})
 }
 
@@ -132,6 +133,40 @@ func (a *App) hopUser(w http.ResponseWriter, r *http.Request, _ []byte) {
 	}
 	hopOK(w, map[string]any{"sub": u.Sub, "id": u.ID, "name": u.Name, "email": u.Email, "status": u.Status,
 		"created_at": iso(u.CreatedAt), "last_seen_at": iso(u.SeenAt), "content": map[string]int{}})
+}
+
+// userActions lists what the manifest advertises; hopUserAction answers every one.
+var userActions = []string{"revoke_sessions"}
+
+// hopUserAction runs one admin action on an account: {"action": "...", "reason": "..."}.
+// It sits behind a.hop, so a bad, stale, replayed or foreign-app signature never gets here.
+// An unknown account is 404 and an unknown or missing action is 400; neither changes anything.
+func (a *App) hopUserAction(w http.ResponseWriter, r *http.Request, body []byte) {
+	var q struct {
+		Action string `json:"action"`
+		Reason string `json:"reason"`
+	}
+	if err := json.Unmarshal(body, &q); err != nil || !slices.Contains(userActions, q.Action) {
+		hopFail(w, http.StatusBadRequest, "unknown_action", "that action does not exist for users")
+		return
+	}
+	sub := r.PathValue("sub")
+	u, err := a.db.UserBySub(sub)
+	if errors.Is(err, db.ErrNotFound) {
+		hopFail(w, http.StatusNotFound, "not_found", "this account never signed in here")
+		return
+	}
+	if err != nil {
+		hopServerErr(w, "user", err)
+		return
+	}
+	n, err := a.db.DeleteSessions(sub) // the same call the hub's session.revoked event makes
+	if err != nil {
+		hopServerErr(w, "user action "+q.Action, err)
+		return
+	}
+	log.Printf("hop action %s user=%d sessions=%d", q.Action, u.ID, n) // internal id only: no name, e-mail or reason
+	hopOK(w, map[string]any{"sub": sub, "revoked": true, "sessions": n})
 }
 
 // ---------- account events from the hub ----------

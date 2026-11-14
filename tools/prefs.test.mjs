@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { readTheme, saveTheme, readLang, saveLang, cookieDomain, readCookie } from '../web/src/lib/prefs.js';
+import { readTheme, saveTheme, readLang, saveLang, cookieDomain, readCookie, langFromQuery, readPalette, savePalette } from '../web/src/lib/prefs.js';
 
 const themeJs = readFileSync(new URL('../web/public/theme.js', import.meta.url), 'utf8');
 
@@ -87,4 +87,53 @@ test('language: cookie, then the old key, never an unsupported value; picking wr
   assert.equal(f.doc.writes[0], 'hop_lang=zh-CN; path=/; max-age=31536000; SameSite=Lax; domain=.hel.ink; Secure');
   assert.equal(f.store.get('hop-lang'), 'zh-CN');
   assert.equal(readCookie('a=1; hop_lang=ja', 'hop_lang'), 'ja');
+});
+
+test('language in the address: ?lang= names one of the nine (any case, pt and zh for the two with a region); anything else is none', () => {
+  for (const [q, want] of [['?lang=de', 'de'], ['?lang=DE', 'de'], ['?a=1&lang=ja&b=2', 'ja'], ['?lang=pt-BR', 'pt-BR'], ['?lang=pt', 'pt-BR'], ['?lang=zh', 'zh-CN'], ['?lang=zh-cn', 'zh-CN'], ['?lang=en', 'en'],
+    ['?lang=xx', null], ['?lang=ar', null], ['?lang=', null], ['', null], [undefined, null], ['?sample=1', null]]) assert.equal(langFromQuery(q), want, String(q));
+});
+
+// ---- the family colour set: cookie hop_palette, attribute data-palette (classic = none), data-theme untouched ----
+test('palette: the first-paint script and the app agree: mist and sand set data-palette, everything else is classic (no attribute)', () => {
+  for (const [cookie, want] of [['hop_palette=mist', 'mist'], ['hop_palette=sand', 'sand'], ['hop_palette=classic', undefined], ['', undefined], ['hop_palette=purple', undefined], ['hop_palette=', undefined], ['a=1; hop_palette=sand; b=2', 'sand'], ['hop_palette=MIST', undefined]]) {
+    const e = env({ cookie });
+    runThemeJs(e);
+    assert.equal(e.doc.documentElement.dataset.palette, want, cookie);
+    assert.equal(readPalette({ doc: e.doc }), want ?? 'classic', cookie);
+  }
+});
+
+test('palette: it never touches data-theme, and the theme still comes from its own cookie', () => {
+  const e = env({ cookie: 'hop_theme=dark; hop_palette=mist' });
+  runThemeJs(e);
+  assert.equal(e.doc.documentElement.dataset.theme, 'dark');
+  assert.equal(e.doc.documentElement.dataset.palette, 'mist');
+  const e2 = env({ cookie: 'hop_theme=light; hop_palette=sand', dark: true });
+  runThemeJs(e2);
+  assert.equal(e2.doc.documentElement.dataset.theme, 'light');
+});
+
+test('palette: choosing writes hop_palette by the same rule as hop_theme (host-only on localhost, .hel.ink and Secure on the family domain); junk is saved as classic', () => {
+  const e = env();
+  savePalette({ doc: e.doc, host: 'localhost' }, 'mist');
+  assert.deepEqual(e.doc.writes, ['hop_palette=mist; path=/; max-age=31536000; SameSite=Lax']);
+  const f = env();
+  savePalette({ doc: f.doc, host: 'pay.hel.ink' }, 'sand');
+  assert.deepEqual(f.doc.writes, ['hop_palette=sand; path=/; max-age=31536000; SameSite=Lax; domain=.hel.ink; Secure']);
+  const g = env();
+  savePalette({ doc: g.doc, host: 'localhost' }, 'neon');
+  assert.match(g.doc.writes[0], /^hop_palette=classic;/);
+  const t = env();
+  saveTheme({ doc: t.doc, host: 'pay.hel.ink', store: t.localStorage }, 'dark');
+  assert.equal(t.doc.writes[0].replace('hop_theme=dark', ''), f.doc.writes[0].replace('hop_palette=sand', ''), 'same attributes as hop_theme');
+  assert.doesNotMatch(f.doc.writes[0], /HttpOnly/i);
+});
+
+test('palette: there is one depth only: a leftover hop_palette_depth cookie sets nothing', () => {
+  for (const cookie of ['hop_palette_depth=surface', 'hop_palette=mist; hop_palette_depth=surface', '']) {
+    const e = env({ cookie });
+    runThemeJs(e);
+    assert.equal(e.doc.documentElement.dataset.paletteDepth, undefined, cookie);
+  }
 });
