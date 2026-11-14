@@ -140,8 +140,11 @@
 
   const path = $derived(route.path);
   const signedIn = $derived(account.ready && account.signedIn);
-  // signed in, the tools live inside the dashboard chrome; the home page and changelog stay public pages
-  const dash = $derived(signedIn && known(path) && path !== '/' && path !== '/changelog' && path !== '/terms' && path !== '/privacy');
+  // signed in, every page but the public home page lives inside the dashboard chrome (the info pages too, so
+  // the sidebar is the way back); guests and search engines get the public frame
+  const dash = $derived(signedIn && known(path) && path !== '/');
+  // the logo and the "back" button lead a signed-in person to the dashboard, a guest to the public start page
+  const homeHref = $derived(signedIn ? '/account' : '/');
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
@@ -167,7 +170,7 @@
 
 <header class="top"><div class="wrap" class:full={dash}>
   {#if dash}<button class="btn btn--sm btn--outline btn--icon menu-btn" style="width:32px" aria-label={t('side.menu')} aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}><Icon name="menu" /></button>{/if}
-  <a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
+  <a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a>
   {#if !dash}
     <nav class="nav" aria-label={t('nav.main')}>
       <a href="/generate" aria-current={here('/generate')}>{t('nav.generate')}</a>
@@ -217,7 +220,7 @@
       <div class="wrap nf"><h1>{t('top.signin')}</h1><a class="btn btn--primary" href={signInHref('/account')}>{t('top.signin')}</a></div>
     {/if}
   {:else}
-    <div class="wrap nf"><h1>{t('nf.title')}</h1><a class="btn btn--outline" href="/">{t('nf.back')}</a></div>
+    <div class="wrap nf"><h1>{t('nf.title')}</h1><a class="btn btn--outline" href={homeHref}>{t('nf.back')}</a></div>
   {/if}
 {/snippet}
 
@@ -247,9 +250,9 @@
       <nav class="links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
-          <li><a href="/terms">{t('ft.terms')}</a></li>
-          <li><a href="/privacy">{t('ft.privacy')}</a></li>
-          <li><a href="/changelog">{t('nav.changelog')}</a></li>
+          <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
+          <li><a href="/privacy" aria-current={here('/privacy')}>{t('ft.privacy')}</a></li>
+          <li><a href="/changelog" aria-current={here('/changelog')}>{t('nav.changelog')}</a></li>
         </ul>
       </nav>
       {@render partOf()}
@@ -261,7 +264,7 @@
   <footer class="ft" id="footer"><div class="wrap">
     {@render partOf()}
     <div class="ft-cols">
-      <div class="ft-brand"><a class="brand" href="/"><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
+      <div class="ft-brand"><a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
       <div><h2 class="ft-h">{t('ft.support')}</h2><ul>
         <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
         <li><a href="{HUB}/contact" rel="noopener">{t('ft.contact')}</a></li>
