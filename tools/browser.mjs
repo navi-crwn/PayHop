@@ -294,6 +294,20 @@ try {
     worst.sort((a, b) => a[0] - b[0]);
     console.log('lowest contrast ratios: ' + worst.slice(0, 5).map(([r, n]) => `${r.toFixed(2)} ${n}`).join(' | '));
   }
+  // ---- short desktop screens: the whole sidebar can be reached (it scrolls by itself when it does not fit) ----
+  for (const [w, h] of [[1440, 900], [1280, 720], [1280, 600]]) {
+    const { ctx, page } = await open({ width: w, height: h });
+    const r = await page.evaluate(() => {
+      const s = document.querySelector('.shell-side');
+      const fits = s.scrollHeight <= s.clientHeight;
+      s.scrollTop = s.scrollHeight;
+      const p = document.querySelector('.shell-side .ft-part').getBoundingClientRect(), sr = s.getBoundingClientRect();
+      const a = document.querySelector('.shell-side-foot a:last-child, .shell-side-foot li:last-child a').getBoundingClientRect();
+      return { fits, scrolls: getComputedStyle(s).overflowY, partBottom: p.bottom, sideBottom: sr.bottom, partTop: p.top, sideTop: sr.top, vh: innerHeight, annBottom: a.bottom };
+    });
+    check(`short screen ${w}x${h}: the sidebar scrolls by itself if needed and "Part of" ends inside it and on screen`, (r.fits || r.scrolls === 'auto') && r.partBottom <= r.sideBottom + 1 && r.partBottom <= r.vh && r.partTop >= r.sideTop && r.annBottom <= r.partTop + 1, JSON.stringify(r));
+    await ctx.close();
+  }
 } catch (e) {
   results.push(false);
   console.error('browser: ' + (e?.stack ?? e));
