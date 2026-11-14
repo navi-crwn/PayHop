@@ -191,6 +191,26 @@ try {
       await c.ctx.close();
     }
   }
+  // ---- the uniform sidebar footer (family contract L-9): Help, Terms, Privacy, Changelog, GitHub, Announcement, then "Part of" ----
+  for (const [w, h] of [[1440, 900], [390, 560]]) {
+    for (const lang of ['en', 'de', 'ja', 'ru']) {
+      const { ctx, page } = await open({ width: w, height: h, lang });
+      if (w < 1024) { await page.click('.shell-burger'); await page.waitForTimeout(450); }
+      const foot = await page.evaluate(() => {
+        const a = [...document.querySelectorAll('.shell-side-foot a')].map((e) => { const r = e.getBoundingClientRect(); return { text: e.textContent.trim(), href: e.getAttribute('href'), top: r.top, left: r.left, h: r.height }; });
+        const part = document.querySelector('.shell-side .ft-part');
+        return { a, part: part ? { top: part.getBoundingClientRect().top, text: part.textContent.trim(), href: part.querySelector('a')?.getAttribute('href') } : null };
+      });
+      check(`footer ${w} ${lang}: six items in the family order`, foot.a.length === 6 && foot.a[4].text === 'GitHub' && foot.a[0].href === 'https://hel.ink/help' && foot.a[1].href === '/terms' && foot.a[2].href === '/privacy' && foot.a[3].href === '/changelog' && foot.a[4].href === 'https://github.com/navi-crwn/PayHop' && foot.a[5].href === 'https://hel.ink/announcements', JSON.stringify(foot.a.map((x) => x.text + ' ' + x.href)));
+      check(`footer ${w} ${lang}: stacked downward in one column, rows 28 to 32px, "Part of Hop Easy Link" under them`, foot.a.every((x, i) => (i === 0 || x.top > foot.a[i - 1].top) && x.left === foot.a[0].left && x.h >= 28 && x.h <= 32) && foot.part && foot.part.top > foot.a[5].top && foot.part.href === 'https://hel.ink' && foot.part.text.includes('Hop Easy Link'), JSON.stringify(foot));
+      if (w < 1024) {
+        const reach = await page.evaluate(() => { const s = document.querySelector('.shell-side'); s.scrollTop = s.scrollHeight; const p = document.querySelector('.shell-side .ft-part').getBoundingClientRect(); const sr = s.getBoundingClientRect(); return { top: p.top, bottom: p.bottom, sideBottom: sr.bottom, vh: innerHeight, scrolls: s.scrollHeight > s.clientHeight }; });
+        check(`footer ${w} ${lang}: the drawer scrolls with the footer inside it, down to "Part of" on screen`, reach.scrolls && reach.bottom <= reach.vh + 1 && reach.bottom <= reach.sideBottom + 1 && reach.top >= 0, JSON.stringify(reach));
+        check(`footer ${w} ${lang}: no sideways scroll`, (await overflowX(page)) <= 0);
+      }
+      await ctx.close();
+    }
+  }
 } catch (e) {
   results.push(false);
   console.error('browser: ' + (e?.stack ?? e));

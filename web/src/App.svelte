@@ -250,6 +250,8 @@
           <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
           <li><a href="/privacy" aria-current={here('/privacy')}>{t('ft.privacy')}</a></li>
           <li><a href="/changelog" aria-current={here('/changelog')}>{t('nav.changelog')}</a></li>
+          <li><a href={REPO} rel="noopener">GitHub</a></li>
+          <li><a href="{HUB}/announcements" rel="noopener">{t('announce.title')}</a></li>
         </ul>
       </nav>
       {@render partOf()}
