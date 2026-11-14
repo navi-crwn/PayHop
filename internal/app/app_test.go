@@ -21,14 +21,8 @@ import (
 
 const testSecret = "payhop-test-secret-that-is-long-enough-123" // test only
 
-func newTestApp(t *testing.T, sso bool) (*App, *httptest.Server) {
-	t.Helper()
-	d, err := db.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { d.Close() })
-	files := fstest.MapFS{
+func testFiles() fstest.MapFS {
+	return fstest.MapFS{
 		"index.html":                  {Data: []byte("<!doctype html><title>PayHop</title>")},
 		"assets/app-abc123.js":        {Data: []byte("console.log(1)")},
 		"hop-assets/v9/hop-hero3d.js": {Data: []byte("window.HopHero3D={}")},
@@ -36,6 +30,16 @@ func newTestApp(t *testing.T, sso bool) (*App, *httptest.Server) {
 		"sw.js":                       {Data: []byte("self.skip=1")},
 		"changelog.json":              {Data: []byte("{}")},
 	}
+}
+
+func newTestApp(t *testing.T, sso bool) (*App, *httptest.Server) {
+	t.Helper()
+	d, err := db.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { d.Close() })
+	files := testFiles()
 	cfg := Config{Version: "test", SSOClient: "payhop", HopClients: []string{"imperium", "helink"}}
 	if sso {
 		cfg.SSOURL = "https://hub.example.org"

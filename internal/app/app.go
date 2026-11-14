@@ -46,6 +46,7 @@ type App struct {
 	nonces  hop.Nonces
 	started time.Time
 	hubUp   func() bool // is the hub reachable (cached); replaced in tests
+	ann     *annCache   // the family announcement from the hub (announce.go)
 }
 
 // New builds the handler. static is the built browser app (web/dist).
@@ -56,6 +57,7 @@ func New(cfg Config, d *db.DB, static fs.FS) (*App, error) {
 	}
 	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, englishStrings()), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
 	a.hubUp = newHubProbe(cfg.SSOURL).Up
+	a.ann = newAnnCache(cfg.SSOURL)
 	return a, nil
 }
 
@@ -76,6 +78,7 @@ func (a *App) Handler() http.Handler {
 	a.accountRoutes(m)
 
 	m.HandleFunc("GET /api/v1/changelog", a.changelogJSON)
+	m.HandleFunc("GET /api/v1/announcement", a.apiAnnouncement)
 
 	m.HandleFunc("GET /auth/sso", a.ssoStart)
 	m.HandleFunc("GET /auth/sso/callback", a.ssoCallback)

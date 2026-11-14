@@ -35,12 +35,13 @@ const SAVED = { enabled: true, max_methods: 20, keep_bills: 200, unreadable: 0, 
   methods: [{ id: 1, format: 'paypal', label: 'PayPal personal', values: { user: 'helena' }, created_at: 1760000000, consent_at: 1760000000 }] };
 
 const browser = await chromium.launch(process.env.SMOKE_CHANNEL ? { channel: process.env.SMOKE_CHANNEL } : {});
-async function open({ width, height = 900, lang = 'en', scheme = 'light', path = '/account', cookies = [], member = true }) {
+async function open({ width, height = 900, lang = 'en', scheme = 'light', path = '/account', cookies = [], member = true, announcement = null }) {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme });
   await ctx.addCookies([{ name: 'hop_lang', value: lang, url: BASE }, { name: 'hop_theme', value: scheme, url: BASE }, ...cookies.map((c) => ({ ...c, url: BASE }))]);
   const page = await ctx.newPage();
   await page.route('**/api/v1/me', (r) => r.fulfill({ json: member ? ME : { sso: true, signed_in: false } }));
   await page.route('**/api/v1/saved', (r) => r.fulfill({ json: SAVED }));
+  await page.route('**/api/v1/announcement', (r) => r.fulfill({ json: { item: announcement } }));
   await page.goto(BASE + path, { waitUntil: 'load' });
   await page.waitForSelector(member ? '.shell-side' : 'header.top', { state: 'attached', timeout: 15000 });
   await page.waitForTimeout(250);
@@ -112,6 +113,61 @@ try {
     await page.click('#saveCard > summary');
     check('generate 1440: the save card is open and stays open', await page.evaluate(() => document.querySelector('#saveCard').open));
     await ctx.close();
+  }
+  // ---- the family announcement card (the item comes from this app's server; here the script plays the server) ----
+  {
+    const item = { id: '12', level: 'info', title: 'Planned maintenance', body: 'Sunday <b>02:00</b> UTC.', url: 'https://hel.ink/announcements/12' };
+    for (const w of [1440, 390]) {
+      const { ctx, page } = await open({ width: w, announcement: item });
+      await page.waitForSelector('#announce');
+      const card = await rect(page, '#announce'), head = await rect(page, '.page-head');
+      check(`announcement ${w}: the card shows above the page heading, inside the screen`, card && head && card.b <= head.y + 1 && card.r <= w && (await overflowX(page)) <= 0, JSON.stringify({ card, head }));
+      check(`announcement ${w}: the title links to the hub, the body is plain text (a tag is shown as letters)`, await page.evaluate(() => document.querySelector('#announce a')?.getAttribute('href') === 'https://hel.ink/announcements/12' && document.querySelector('#announce p').textContent === 'Sunday <b>02:00</b> UTC.' && !document.querySelector('#announce p b')));
+      await ctx.close();
+    }
+    const { ctx, page } = await open({ width: 1440, announcement: item });
+    await page.waitForSelector('#announce');
+    await page.click('#announce button');
+    await page.waitForTimeout(100);
+    check('announcement: closing hides the card and writes ann-12', (await page.locator('#announce').count()) === 0 && (await page.evaluate(() => !!localStorage.getItem('ann-12'))));
+    await page.reload();
+    await page.waitForSelector('.shell-side', { state: 'attached' });
+    await page.waitForTimeout(500);
+    check('announcement: after a reload it stays closed', (await page.locator('#announce').count()) === 0);
+    await page.evaluate(() => localStorage.setItem('ann-12', String(Date.now() - 8 * 86400000)));
+    await page.reload();
+    await page.waitForSelector('#announce', { timeout: 5000 }).catch(() => {});
+    check('announcement: after 7 days it comes back', (await page.locator('#announce').count()) === 1);
+    await ctx.close();
+    const crit = await open({ width: 1440, announcement: { ...item, id: '7', level: 'critical' } });
+    await crit.page.waitForSelector('#announce');
+    await crit.page.evaluate(() => localStorage.setItem('ann-7', String(Date.now())));
+    await crit.page.reload();
+    await crit.page.waitForSelector('#announce');
+    check('announcement: a critical notice has no close button and shows even with a stored close', (await crit.page.locator('#announce button').count()) === 0);
+    await crit.ctx.close();
+    const none = await open({ width: 1440, announcement: null });
+    await none.page.waitForTimeout(500);
+    const h1 = await rect(none.page, '.page-head');
+    check('announcement: no item means no card and no gap above the heading', (await none.page.locator('#announce').count()) === 0 && h1.y < 120, JSON.stringify(h1));
+    await none.ctx.close();
+    const gen = await open({ width: 1440, path: '/generate', announcement: item });
+    await gen.page.waitForTimeout(600);
+    check('announcement: only the dashboard shows it, not the Payment QR page', (await gen.page.locator('#announce').count()) === 0);
+    await gen.ctx.close();
+    // a server that answers an error, or the hub being gone: the dashboard is unharmed
+    const broke = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const bp = await broke.newPage();
+    await bp.route('**/api/v1/me', (r) => r.fulfill({ json: ME }));
+    await bp.route('**/api/v1/saved', (r) => r.fulfill({ json: SAVED }));
+    await bp.route('**/api/v1/announcement', (r) => r.fulfill({ status: 502, body: '<html>bad gateway</html>', contentType: 'text/html' }));
+    const errs = [];
+    bp.on('pageerror', (e) => errs.push(e.message));
+    await bp.goto(BASE + '/account');
+    await bp.waitForSelector('.page-head');
+    await bp.waitForTimeout(400);
+    check('announcement: a failing server means no card and no page error', errs.length === 0 && (await bp.locator('#announce').count()) === 0);
+    await broke.close();
   }
 } catch (e) {
   results.push(false);
