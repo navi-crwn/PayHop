@@ -242,13 +242,13 @@ try {
       await c.ctx.close();
     }
     // public pages stay classic (the colour set is for the dashboard in this stage)
-    const pub = await open({ width: 1440, path: '/generate', member: false, cookies: [{ name: 'hop_palette', value: 'sand' }, { name: 'hop_palette_depth', value: 'surface' }] });
+    const pub = await open({ width: 1440, path: '/generate', member: false, cookies: [{ name: 'hop_palette', value: 'sand' }] });
     const pubBg = await pub.page.evaluate(() => [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.querySelector('.btn--primary, .card')).backgroundColor].join());
     const pubRef = await open({ width: 1440, path: '/generate', member: false });
     check('palette: a guest page looks the same with a cookie of sand and the surface trial as without', pubBg === (await pubRef.page.evaluate(() => [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.querySelector('.btn--primary, .card')).backgroundColor].join())), pubBg);
     await pub.ctx.close(); await pubRef.ctx.close();
 
-    // contrast: text and the primary button, every set, light and dark, both depths
+    // contrast: text and the primary button, every set, light and dark
     const lum = (rgb) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
     const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
     const PAIRS = [
@@ -265,10 +265,16 @@ try {
       ['ticked colour choice', '.pal-opt[aria-checked="true"]', 'self'],
       ['colour choice', '.pal-opt[aria-checked="false"]', '.shell-side']
     ];
+    for (const [pal, scheme, bg, panel] of [['mist','light','rgb(244, 246, 252)','rgb(255, 255, 255)'],['mist','dark','rgb(13, 17, 32)','rgb(20, 26, 46)'],['sand','light','rgb(250, 246, 241)','rgb(255, 255, 255)'],['sand','dark','rgb(23, 17, 13)','rgb(31, 24, 20)']]) {
+      const c = await open({ width: 1440, scheme, cookies: [{ name: 'hop_palette', value: pal }] });
+      const got = await c.page.evaluate(() => [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.querySelector('.cards .card')).backgroundColor]);
+      check(`palette ${pal}/${scheme}: the page and card surfaces take the set's colours (no trial cookie needed)`, got[0] === bg && got[1] === panel, JSON.stringify(got));
+      await c.ctx.close();
+    }
     const worst = [];
-    for (const pal of ['classic', 'mist', 'sand']) for (const scheme of ['light', 'dark']) for (const depth of ['accent', 'surface']) {
-      if (pal === 'classic' && depth === 'surface') continue;
-      const ck = [{ name: 'hop_palette', value: pal }, ...(depth === 'surface' ? [{ name: 'hop_palette_depth', value: 'surface' }] : [])];
+    for (const pal of ['classic', 'mist', 'sand']) for (const scheme of ['light', 'dark']) {
+      const depth = 'surfaces';
+      const ck = [{ name: 'hop_palette', value: pal }];
       const c = await open({ width: 1440, scheme, cookies: ck, announcement: ann });
       await c.page.waitForSelector('#announce');
       const got = await c.page.evaluate((pairs) => {

@@ -130,10 +130,10 @@ test('palette: choosing writes hop_palette by the same rule as hop_theme (host-o
   assert.doesNotMatch(f.doc.writes[0], /HttpOnly/i);
 });
 
-test('palette: the trial cookie for the gallery sets data-palette-depth only when it says surface', () => {
-  for (const [cookie, want] of [['hop_palette_depth=surface', 'surface'], ['hop_palette=mist; hop_palette_depth=surface', 'surface'], ['hop_palette_depth=accent', undefined], ['', undefined]]) {
+test('palette: there is one depth only: a leftover hop_palette_depth cookie sets nothing', () => {
+  for (const cookie of ['hop_palette_depth=surface', 'hop_palette=mist; hop_palette_depth=surface', '']) {
     const e = env({ cookie });
     runThemeJs(e);
-    assert.equal(e.doc.documentElement.dataset.paletteDepth, want, cookie);
+    assert.equal(e.doc.documentElement.dataset.paletteDepth, undefined, cookie);
   }
 });

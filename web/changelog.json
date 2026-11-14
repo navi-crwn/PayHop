@@ -18,7 +18,7 @@
         {
           "type": "added",
           "where": "Dashboard sidebar",
-          "text": "A new \"Colours\" choice at the bottom of the sidebar lets you pick Classic, Mist or Sand, with a small colour sample for each. Your choice is remembered and written to a cookie shared by the HOP apps, so the other apps can follow it as they get the same choice. Before, the dashboard had one fixed colour. This is a first trial of one look for the whole family, and only the dashboard changes; the public pages stay as they were."
+          "text": "A new \"Colours\" choice at the bottom of the sidebar lets you pick Classic, Mist or Sand, with a small colour sample for each. Mist and Sand change the accent colour and also give the page, cards and sidebar softer matching backgrounds. Your choice is remembered and written to a cookie shared by the HOP apps, so the other apps can follow it as they get the same choice. Before, the dashboard had one fixed colour. This is a first trial of one look for the whole family, and only the dashboard changes; the public pages stay as they were."
         },
         {
           "type": "added",

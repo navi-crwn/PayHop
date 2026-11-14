@@ -19,8 +19,6 @@ try {
   // the family colour set (cookie hop_palette): classic is no attribute at all, mist and sand set data-palette. data-theme is untouched.
   var pal = /(?:^|; )hop_palette=([^;]*)/.exec(jar);
   if (pal && (pal[1] === 'mist' || pal[1] === 'sand')) document.documentElement.dataset.palette = pal[1];
-  // trial cookie for the gallery of the two depths (not in the picker, not in any text): surface colours as well as accents
-  if (/(?:^|; )hop_palette_depth=surface(?:;|$)/.test(jar)) document.documentElement.dataset.paletteDepth = 'surface';
 } catch (e) {
   document.documentElement.dataset.theme = 'light';
 }

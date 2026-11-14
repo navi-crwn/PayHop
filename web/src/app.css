@@ -545,15 +545,10 @@ dialog.confirm .actions { justify-content: flex-end; }
 }
 
 /* ---------- family colour sets: Mist and Sand (the same values in every HOP app; classic is no attribute and no rule here) ----------
-   Only the dashboard: the rules need .shell on the page, so the public pages stay classic. Depth (a) = the accent only. */
-:root[data-palette="mist"]:has(.shell) { --accent: #3f4fc4; --accent-ink: #ffffff; --brand: #4f5bd5; --violet: #4f5bd5; --accent-soft: color-mix(in srgb, #3f4fc4 11%, var(--panel)); }
-:root[data-palette="mist"][data-theme="dark"]:has(.shell) { --accent: #9aaeff; --accent-ink: #0a1022; --brand: #9aaeff; --violet: #9aaeff; --accent-soft: color-mix(in srgb, #9aaeff 14%, var(--panel)); }
-:root[data-palette="sand"]:has(.shell) { --accent: #a8481f; --accent-ink: #ffffff; --brand: #b4532a; --violet: #b4532a; --accent-soft: color-mix(in srgb, #a8481f 11%, var(--panel)); }
-:root[data-palette="sand"][data-theme="dark"]:has(.shell) { --accent: #f3b48c; --accent-ink: #1b0f0a; --brand: #f3b48c; --violet: #f3b48c; --accent-soft: color-mix(in srgb, #f3b48c 14%, var(--panel)); }
-/* Depth (b), for the gallery only (cookie hop_palette_depth=surface, no control and no text): the surfaces take the set's soft colours too. */
-:root[data-palette="mist"][data-palette-depth="surface"]:has(.shell) { --bg: #f4f6fc; --panel: #ffffff; --panel2: #eef1fa; --line: #dde2f1; }
-:root[data-palette="mist"][data-palette-depth="surface"][data-theme="dark"]:has(.shell) { --bg: #0d1120; --panel: #141a2e; --panel2: #1a2138; --line: #262e4a; }
-:root[data-palette="sand"][data-palette-depth="surface"]:has(.shell) { --bg: #faf6f1; --panel: #ffffff; --panel2: #f5eee6; --line: #ece2d6; }
-:root[data-palette="sand"][data-palette-depth="surface"][data-theme="dark"]:has(.shell) { --bg: #17110d; --panel: #1f1814; --panel2: #271f19; --line: #3a2e25; }
+   Only the dashboard: the rules need .shell on the page, so the public pages stay classic. Accent and surfaces (the owner chose both). */
+:root[data-palette="mist"]:has(.shell) { --accent: #3f4fc4; --accent-ink: #ffffff; --brand: #4f5bd5; --violet: #4f5bd5; --accent-soft: color-mix(in srgb, #3f4fc4 11%, var(--panel)); --bg: #f4f6fc; --panel: #ffffff; --panel2: #eef1fa; --line: #dde2f1; }
+:root[data-palette="mist"][data-theme="dark"]:has(.shell) { --accent: #9aaeff; --accent-ink: #0a1022; --brand: #9aaeff; --violet: #9aaeff; --accent-soft: color-mix(in srgb, #9aaeff 14%, var(--panel)); --bg: #0d1120; --panel: #141a2e; --panel2: #1a2138; --line: #262e4a; }
+:root[data-palette="sand"]:has(.shell) { --accent: #a8481f; --accent-ink: #ffffff; --brand: #b4532a; --violet: #b4532a; --accent-soft: color-mix(in srgb, #a8481f 11%, var(--panel)); --bg: #faf6f1; --panel: #ffffff; --panel2: #f5eee6; --line: #ece2d6; }
+:root[data-palette="sand"][data-theme="dark"]:has(.shell) { --accent: #f3b48c; --accent-ink: #1b0f0a; --brand: #f3b48c; --violet: #f3b48c; --accent-soft: color-mix(in srgb, #f3b48c 14%, var(--panel)); --bg: #17110d; --panel: #1f1814; --panel2: #271f19; --line: #3a2e25; }
 /* a change of colour set is instant, never animated, and the dashboard is still when motion is reduced */
 @media (prefers-reduced-motion: reduce) { .shell, .shell * { transition: none !important; animation: none !important; } }
