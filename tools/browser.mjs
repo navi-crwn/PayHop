@@ -87,6 +87,32 @@ try {
     check(`frame 360 ${lang} ${p}: no sideways scroll, bar items do not overlap`, ov <= 0 && !clash, `overflow ${ov}`);
     await ctx.close();
   }
+  // ---- /generate: the code right after the form, the save card folded (phones and tablets); two columns on a wide screen ----
+  for (const w of [390, 768, 1024]) {
+    const { ctx, page } = await open({ width: w, height: 844, path: '/generate' });
+    await page.waitForSelector('#qrBox');
+    const form = await rect(page, '#formCard'), qr = await rect(page, '#qrBox'), save = await rect(page, '#saveCard');
+    check(`generate ${w}: the code sits under the form and above the save card`, form && qr && save && qr.y > form.b - 1 && save.y > qr.b - 1, JSON.stringify({ form, qr, save }));
+    check(`generate ${w}: the save card is folded`, await page.evaluate(() => !document.querySelector('#saveCard').open));
+    if (w === 390) check('generate 390: the code starts within the first 1200px of the page', qr.y < 1200, String(qr.y));
+    check(`generate ${w}: no sideways scroll`, (await overflowX(page)) <= 0);
+    await page.click('#saveCard > summary');
+    await page.waitForTimeout(150);
+    const isOpen = await page.evaluate(() => document.querySelector('#saveCard').open);
+    const consent = await rect(page, '#consentMethod');
+    check(`generate ${w}: tapping the title opens the card and its fields are on screen`, isOpen && consent && consent.w > 0 && consent.r <= w, JSON.stringify(consent));
+    check(`generate ${w}: the open card does not overlap the code or the form`, !overlaps(await rect(page, '#saveCard'), await rect(page, '#qrBox')) && !overlaps(await rect(page, '#saveCard'), await rect(page, '#formCard')));
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open({ width: 1440, path: '/generate' });
+    await page.waitForSelector('#qrBox');
+    const form = await rect(page, '#formCard'), qr = await rect(page, '#qrBox'), save = await rect(page, '#saveCard');
+    check('generate 1440: the code is in the right column, the save card under the form', qr.x >= form.r && Math.abs(save.x - form.x) < 1 && save.y >= form.b, JSON.stringify({ form, qr, save }));
+    await page.click('#saveCard > summary');
+    check('generate 1440: the save card is open and stays open', await page.evaluate(() => document.querySelector('#saveCard').open));
+    await ctx.close();
+  }
 } catch (e) {
   results.push(false);
   console.error('browser: ' + (e?.stack ?? e));

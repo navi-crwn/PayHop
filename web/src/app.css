@@ -267,6 +267,17 @@ section.blk { padding: 56px 0; }
   .hero-art { max-width: 280px; order: -1; }
   .hero { padding-top: 40px; }
   .two { grid-template-columns: minmax(0, 1fr); }
+  /* fill the form, see the code, then (folded) the save card: the two columns dissolve into one ordered list */
+  .two > .col-a { display: contents; }
+  .two > .col-a > #formCard { order: 1; }
+  .two > .col-b { order: 2; }
+  .two > .col-a > #saveCard { order: 3; margin-top: 0; }
+  .fold > summary { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .fold > summary h2 { margin: 0; }
+  .fold > summary::after { content: ''; width: 8px; height: 8px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); margin-right: 4px; flex: none; }
+  .fold[open] > summary { margin-bottom: 14px; }
+  .fold[open] > summary::after { transform: rotate(-135deg); }
+  .fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
   .ft-cols { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
@@ -370,6 +381,11 @@ section.blk { padding: 56px 0; }
 .srows .s-main b { font-weight: 600; overflow-wrap: anywhere; }
 .srows .s-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px; color: var(--muted); }
 .empty { margin: 0; padding: 18px 0 6px; font-size: 14px; color: var(--muted); }
+/* the save card is a <details>: on a wide screen it looks like any card; on a phone it folds under the code */
+.fold > summary { list-style: none; cursor: default; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary h2 { margin: 0 0 14px; }
+.fold:not([open]) > summary h2 { margin-bottom: 0; }
 .sep { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
 .page > .note, .page > .hint { max-width: 48rem; }
 .page > .note { margin-bottom: 0; }
