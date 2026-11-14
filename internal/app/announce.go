@@ -3,8 +3,10 @@ package app
 import (
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +38,7 @@ type annItem struct {
 }
 
 type annCache struct {
+	hub     string // the hub address: a link may only point at its own domain
 	url     string // empty: ask nobody
 	ttl     time.Duration
 	backoff time.Duration
@@ -51,6 +54,7 @@ func newAnnCache(hub string) *annCache {
 	c := &annCache{ttl: annTTL, backoff: annBackoff,
 		client: &http.Client{Timeout: annTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
 	if hub = strings.TrimRight(hub, "/"); hub != "" {
+		c.hub = hub
 		c.url = hub + "/announcements.json?app=payhop"
 	}
 	return c
@@ -100,7 +104,7 @@ func (c *annCache) fetch() (*annItem, error) {
 	for i := range doc.Items { // the hub lists the newest first; a critical one beats a newer calmer one
 		it := doc.Items[i]
 		it.ID, it.Title = strings.TrimSpace(it.ID), strings.TrimSpace(it.Title)
-		if it.ID == "" || it.Title == "" {
+		if !annIDRe.MatchString(it.ID) || it.Title == "" { // the id becomes a storage key in the browser: a short plain token only
 			continue
 		}
 		if it.Level != "critical" && it.Level != "warning" {
@@ -116,10 +120,31 @@ func (c *annCache) fetch() (*annItem, error) {
 	}
 	pick.Title = clip(pick.Title, 200)
 	pick.Body = ellipsis(strings.TrimSpace(pick.Body), annMaxText)
-	if u, err := url.Parse(pick.URL); err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
-		pick.URL = "" // only a web address may become a link
+	if !annLinkOK(pick.URL, c.hub) {
+		pick.URL = "" // only an https address on the hub's own domain may become a link
 	}
 	return pick, nil
+}
+
+var annIDRe = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+
+// annLinkOK: only https, and only the hub's own host or a host under the same two-label domain (hel.ink for hub.hel.ink).
+// An IP-address hub shares a domain with nobody but itself.
+func annLinkOK(raw, hub string) bool {
+	u, err := url.Parse(raw)
+	h, err2 := url.Parse(hub)
+	if err != nil || err2 != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || h.Hostname() == "" {
+		return false
+	}
+	dom := func(host string) string {
+		p := strings.Split(strings.ToLower(host), ".")
+		if len(p) <= 2 {
+			return strings.Join(p, ".")
+		}
+		return strings.Join(p[len(p)-2:], ".")
+	}
+	uh, hh := u.Hostname(), h.Hostname()
+	return strings.EqualFold(uh, hh) || (net.ParseIP(hh) == nil && strings.Contains(hh, ".") && dom(uh) == dom(hh))
 }
 
 func ellipsis(s string, n int) string {

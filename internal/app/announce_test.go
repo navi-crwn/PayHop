@@ -72,7 +72,7 @@ func TestAnnouncementShowsWhatTheHubPublishes(t *testing.T) {
 	hub, n, q := fakeHub(t, oneInfo, 0)
 	srv := appWithHub(t, hub.URL)
 	item, _ := announcement(t, srv)
-	if item == nil || item["title"] != "Scheduled maintenance" || item["id"] != "12" || item["url"] != "https://hel.ink/announcements/12" {
+	if item == nil || item["title"] != "Scheduled maintenance" || item["id"] != "12" || item["url"] != "" { // the test hub is an IP address on http: no link may come from it (annLinkOK is tested on its own)
 		t.Fatalf("item: %v", item)
 	}
 	if item["body"] != "Plain text <b>and</b> a tag." {
@@ -195,5 +195,55 @@ func TestAnnouncementAnswersCarryNoCookieAndNoLongCache(t *testing.T) {
 	res, _ := http.Get(srv.URL + "/api/v1/announcement")
 	if res.Header.Get("Set-Cookie") != "" || res.Header.Get("Cache-Control") != "no-store" {
 		t.Errorf("headers: %v", res.Header)
+	}
+}
+
+func TestAnnouncementIDMustBeAShortPlainToken(t *testing.T) {
+	long := strings.Repeat("a", 65)
+	for _, id := range []string{long, "a b", "x/../y", `a"b`, "é", "<b>", "a:b"} {
+		hub, _, _ := fakeHub(t, `{"version":1,"items":[{"id":"`+id+`","level":"info","title":"T","body":"b"}]}`, 0)
+		if item, _ := announcement(t, appWithHub(t, hub.URL)); item != nil {
+			t.Errorf("id %q must be skipped, got %v", id, item)
+		}
+	}
+	// a bad id is skipped, the next good item still shows
+	hub, _, _ := fakeHub(t, `{"version":1,"items":[{"id":"bad id","level":"info","title":"A"},{"id":"ok_1-x","level":"info","title":"B"}]}`, 0)
+	if item, _ := announcement(t, appWithHub(t, hub.URL)); item == nil || item["id"] != "ok_1-x" {
+		t.Errorf("the good item must show: %v", item)
+	}
+	ok64 := strings.Repeat("a", 64)
+	hub2, _, _ := fakeHub(t, `{"version":1,"items":[{"id":"`+ok64+`","level":"info","title":"T"}]}`, 0)
+	if item, _ := announcement(t, appWithHub(t, hub2.URL)); item == nil {
+		t.Error("a 64-character id is allowed")
+	}
+}
+
+func TestAnnouncementLinkOnlyHttpsOnTheHubsOwnDomain(t *testing.T) {
+	for _, tc := range []struct {
+		raw, hub string
+		want     bool
+	}{
+		{"https://hel.ink/announcements/12", "https://hub.hel.ink", true},
+		{"https://hub.hel.ink/x", "https://hub.hel.ink", true},
+		{"https://pay.hel.ink/x", "https://hub.hel.ink", true},
+		{"http://hel.ink/x", "https://hub.hel.ink", false},
+		{"https://evil.example.com/x", "https://hub.hel.ink", false},
+		{"https://hel.ink.evil.com/x", "https://hub.hel.ink", false},
+		{"https://evilhel.ink/x", "https://hub.hel.ink", false},
+		{"https://user@hel.ink/x", "https://hub.hel.ink", false},
+		{"javascript:alert(1)", "https://hub.hel.ink", false},
+		{"//hel.ink/x", "https://hub.hel.ink", false},
+		{"", "https://hub.hel.ink", false},
+		{"https://127.0.0.1:9/x", "https://127.0.0.1:8", true}, // same host
+		{"https://10.0.0.2/x", "https://127.0.0.1:8", false},   // an IP hub shares no domain
+	} {
+		if got := annLinkOK(tc.raw, tc.hub); got != tc.want {
+			t.Errorf("annLinkOK(%q, %q) = %v, want %v", tc.raw, tc.hub, got, tc.want)
+		}
+	}
+	// through the endpoint: a link to another site is shown as no link at all
+	hub, _, _ := fakeHub(t, `{"version":1,"items":[{"id":"1","level":"info","title":"T","url":"https://evil.example.com/x"}]}`, 0)
+	if item, _ := announcement(t, appWithHub(t, hub.URL)); item == nil || item["url"] != "" {
+		t.Errorf("foreign link must be dropped: %v", item)
 	}
 }
