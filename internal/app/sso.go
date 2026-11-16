@@ -234,7 +234,8 @@ func (a *App) sessionState(r *http.Request) (*db.User, bool) {
 // apiMe tells the browser whether someone is signed in. It always answers 200
 // so a guest's console stays clean; sso:false means sign-in is not set up here.
 func (a *App) apiMe(w http.ResponseWriter, r *http.Request) {
-	out := map[string]any{"sso": a.cfg.SSOEnabled(), "signed_in": false}
+	// version is for the Feedback link, which tells the form which release the person was using
+	out := map[string]any{"sso": a.cfg.SSOEnabled(), "signed_in": false, "version": a.cfg.Version}
 	if u, fresh := a.sessionState(r); u != nil && !fresh {
 		// The page may re-check once, quietly, through the hub, but never when the hub is down:
 		// the browser would be sent to its own error page. Then the page simply acts as a guest.

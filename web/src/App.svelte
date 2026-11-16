@@ -7,6 +7,7 @@
   import { readTheme as readThemePref, saveTheme, saveLang, langFromQuery, readPalette, savePalette, PALETTES, browserCtx } from './lib/prefs.js';
   import { BRAND } from './lib/brand';
   import { FAMILY, familyHref } from './lib/family';
+  import { feedbackUrl } from './lib/feedback.js';
   import Icon from './lib/Icon.svelte';
   import FamilySwitcher from './lib/FamilySwitcher.svelte';
   import Home from './lib/pages/Home.svelte';
@@ -172,6 +173,8 @@
   // the logo and the "back" button lead a signed-in person to the dashboard, a guest to the public start page
   const homeHref = $derived(signedIn ? '/account' : '/');
   const hubHref = $derived(signedIn && account.hubUrl ? account.hubUrl.replace(/\/+$/, '') + '/dashboard' : HUB);
+  // the Feedback link opens the HOP ID form in a new tab; with no hub address it is empty and nothing is drawn
+  const feedback = $derived(feedbackUrl(account.hubUrl, path, account.version));
   const others = FAMILY;
   const here = (p: string) => (path === p ? 'page' : undefined);
   // the page title the dashboard bar shows (keys that already exist; each page keeps its own heading below)
@@ -271,6 +274,7 @@
       <nav class="shell-side-foot links">
         <ul>
           <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
+          {#if feedback}<li><a href={feedback} target="_blank" rel="noopener">{t('ft.feedback')}</a></li>{/if}
           <li><a href="/terms" aria-current={here('/terms')}>{t('ft.terms')}</a></li>
           <li><a href="/privacy" aria-current={here('/privacy')}>{t('ft.privacy')}</a></li>
           <li><a href="/changelog" aria-current={here('/changelog')}>{t('nav.changelog')}</a></li>
@@ -310,6 +314,7 @@
       <div class="ft-brand"><a class="brand" href={homeHref}><img src={BRAND.mark} alt="" width="28" height="28"><span class="pname hop-name-payhop">{BRAND.name}</span></a><p>{t('ft.tagline')}</p></div>
       <div><h2 class="ft-h">{t('ft.support')}</h2><ul>
         <li><a href="{HUB}/help" rel="noopener">{t('ft.help')}</a></li>
+        {#if feedback}<li><a href={feedback} target="_blank" rel="noopener">{t('ft.feedback')}</a></li>{/if}
         <li><a href="{HUB}/contact" rel="noopener">{t('ft.contact')}</a></li>
         <li><a href="{HUB}/status" rel="noopener">{t('ft.status')}</a></li>
         <li><a href="/changelog">{t('nav.changelog')}</a></li>

@@ -30,16 +30,18 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : ' :: ' + detail}`);
 };
 
-const ME = { sso: true, signed_in: true, name: 'Helena', email: 'helena@example.test', hub_url: 'https://hub.example.test', logout_url: 'https://hub.example.test/logout' };
+const ME = { sso: true, signed_in: true, name: 'Helena', email: 'helena@example.test', hub_url: 'https://hub.example.test', logout_url: 'https://hub.example.test/logout', version: '0.0.7' };
+const GUEST = { sso: true, signed_in: false, hub_url: 'https://hub.example.test', version: '0.0.7' };
+const FB = (from) => `https://hub.example.test/feedback?app=payhop&from=${from}&v=0.0.7`;
 const SAVED = { enabled: true, max_methods: 20, keep_bills: 200, unreadable: 0, bills: [],
   methods: [{ id: 1, format: 'paypal', label: 'PayPal personal', values: { user: 'helena' }, created_at: 1760000000, consent_at: 1760000000 }] };
 
 const browser = await chromium.launch(process.env.SMOKE_CHANNEL ? { channel: process.env.SMOKE_CHANNEL } : {});
-async function open({ width, height = 900, lang = 'en', scheme = 'light', path = '/account', cookies = [], member = true, announcement = null }) {
+async function open({ width, height = 900, lang = 'en', scheme = 'light', path = '/account', cookies = [], member = true, announcement = null, me = null }) {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme });
   await ctx.addCookies([{ name: 'hop_lang', value: lang, url: BASE }, { name: 'hop_theme', value: scheme, url: BASE }, ...cookies.map((c) => ({ ...c, url: BASE }))]);
   const page = await ctx.newPage();
-  await page.route('**/api/v1/me', (r) => r.fulfill({ json: member ? ME : { sso: true, signed_in: false } }));
+  await page.route('**/api/v1/me', (r) => r.fulfill({ json: me ?? (member ? ME : GUEST) }));
   await page.route('**/api/v1/saved', (r) => r.fulfill({ json: SAVED }));
   await page.route('**/api/v1/announcement', (r) => r.fulfill({ json: { item: announcement } }));
   await page.goto(BASE + path, { waitUntil: 'load' });
@@ -191,18 +193,19 @@ try {
       await c.ctx.close();
     }
   }
-  // ---- the uniform sidebar footer (family contract L-9): Help, Terms, Privacy, Changelog, GitHub, Announcement, then "Part of" ----
+  // ---- the uniform sidebar footer (family contract L-9, seven items since the Feedback link): Help, Feedback, Terms, Privacy, Changelog, GitHub, Announcement, then "Part of" ----
   for (const [w, h] of [[1440, 900], [390, 560]]) {
     for (const lang of ['en', 'de', 'ja', 'ru']) {
       const { ctx, page } = await open({ width: w, height: h, lang });
       if (w < 1024) { await page.click('.shell-burger'); await page.waitForTimeout(450); }
       const foot = await page.evaluate(() => {
-        const a = [...document.querySelectorAll('.shell-side-foot a')].map((e) => { const r = e.getBoundingClientRect(); return { text: e.textContent.trim(), href: e.getAttribute('href'), top: r.top, left: r.left, h: r.height }; });
+        const a = [...document.querySelectorAll('.shell-side-foot a')].map((e) => { const r = e.getBoundingClientRect(); return { text: e.textContent.trim(), href: e.getAttribute('href'), target: e.getAttribute('target'), rel: e.getAttribute('rel'), top: r.top, left: r.left, h: r.height }; });
         const part = document.querySelector('.shell-side .ft-part');
         return { a, part: part ? { top: part.getBoundingClientRect().top, text: part.textContent.trim(), href: part.querySelector('a')?.getAttribute('href') } : null };
       });
-      check(`footer ${w} ${lang}: six items in the family order`, foot.a.length === 6 && foot.a[4].text === 'GitHub' && foot.a[0].href === 'https://hel.ink/help' && foot.a[1].href === '/terms' && foot.a[2].href === '/privacy' && foot.a[3].href === '/changelog' && foot.a[4].href === 'https://github.com/navi-crwn/PayHop' && foot.a[5].href === 'https://hel.ink/announcements', JSON.stringify(foot.a.map((x) => x.text + ' ' + x.href)));
-      check(`footer ${w} ${lang}: stacked downward in one column, rows 28 to 32px, "Part of Hop Easy Link" under them`, foot.a.every((x, i) => (i === 0 || x.top > foot.a[i - 1].top) && x.left === foot.a[0].left && x.h >= 28 && x.h <= 32) && foot.part && foot.part.top > foot.a[5].top && foot.part.href === 'https://hel.ink' && foot.part.text.includes('Hop Easy Link'), JSON.stringify(foot));
+      check(`footer ${w} ${lang}: seven items in the family order, Feedback right after Help`, foot.a.length === 7 && foot.a[5].text === 'GitHub' && foot.a[0].href === 'https://hel.ink/help' && foot.a[1].href === FB('dashboard') && foot.a[2].href === '/terms' && foot.a[3].href === '/privacy' && foot.a[4].href === '/changelog' && foot.a[5].href === 'https://github.com/navi-crwn/PayHop' && foot.a[6].href === 'https://hel.ink/announcements', JSON.stringify(foot.a.map((x) => x.text + ' ' + x.href)));
+      check(`footer ${w} ${lang}: the Feedback link opens in a new tab and has the label of the language`, foot.a[1].target === '_blank' && foot.a[1].rel === 'noopener' && foot.a[1].text === { en: 'Feedback', de: 'Feedback', ja: 'フィードバック', ru: 'Отзыв' }[lang], JSON.stringify(foot.a[1]));
+      check(`footer ${w} ${lang}: stacked downward in one column, rows 28 to 32px, "Part of Hop Easy Link" under them`, foot.a.every((x, i) => (i === 0 || x.top > foot.a[i - 1].top) && x.left === foot.a[0].left && x.h >= 28 && x.h <= 32) && foot.part && foot.part.top > foot.a[6].top && foot.part.href === 'https://hel.ink' && foot.part.text.includes('Hop Easy Link'), JSON.stringify(foot));
       if (w < 1024) {
         const reach = await page.evaluate(() => { const s = document.querySelector('.shell-side'); s.scrollTop = s.scrollHeight; const p = document.querySelector('.shell-side .ft-part').getBoundingClientRect(); const sr = s.getBoundingClientRect(); return { top: p.top, bottom: p.bottom, sideBottom: sr.bottom, vh: innerHeight, scrolls: s.scrollHeight > s.clientHeight }; });
         check(`footer ${w} ${lang}: the drawer scrolls with the footer inside it, down to "Part of" on screen`, reach.scrolls && reach.bottom <= reach.vh + 1 && reach.bottom <= reach.sideBottom + 1 && reach.top >= 0, JSON.stringify(reach));
@@ -210,6 +213,57 @@ try {
       }
       await ctx.close();
     }
+  }
+  // ---- the Feedback link: a click opens the HOP ID form in a new tab with the right app, the screen name and the version; this page stays ----
+  for (const w of [1440, 390]) {
+    const { ctx, page } = await open({ width: w, height: 900 });
+    await ctx.route('https://hub.example.test/**', (r) => r.fulfill({ contentType: 'text/html', body: '<title>form</title>' }));
+    if (w < 1024) { await page.click('.shell-burger'); await page.waitForTimeout(450); }
+    const [tab] = await Promise.all([ctx.waitForEvent('page'), page.click('.shell-side-foot a[href*="/feedback?"]')]);
+    check(`feedback ${w}: the click opens a new tab on the hub form for payhop, from=dashboard`, tab.url() === FB('dashboard'), tab.url());
+    check(`feedback ${w}: the dashboard tab stays where it was`, new URL(page.url()).pathname === '/account');
+    await ctx.close();
+  }
+  // ---- the screen name never carries an address, a query or an id: a deep link with ids still sends only the name ----
+  {
+    const { ctx, page } = await open({ width: 1440, path: '/account?bill=991&token=SECRET#note-7' });
+    const href = await page.getAttribute('.shell-side-foot a[href*="/feedback?"]', 'href');
+    check('feedback: an address with ids, a query and a fragment sends only the screen name', href === FB('dashboard') && !/991|SECRET|note-7/.test(href), href);
+    await page.click('.shell-side a[href="/split"]');
+    await page.waitForTimeout(200);
+    check('feedback: the name follows the screen (split) without a reload', (await page.getAttribute('.shell-side-foot a[href*="/feedback?"]', 'href')) === FB('split'));
+    await ctx.close();
+  }
+  // ---- no hub address: no Feedback link anywhere, the sidebar footer stays at six items ----
+  {
+    const { ctx, page } = await open({ width: 1440, me: { ...ME, hub_url: '' } });
+    const n = await page.evaluate(() => ({ foot: document.querySelectorAll('.shell-side-foot a').length, fb: document.querySelectorAll('a[href*="/feedback"]').length }));
+    check('feedback without a hub address: six items, no Feedback link', n.foot === 6 && n.fb === 0, JSON.stringify(n));
+    await ctx.close();
+    const g = await open({ width: 1440, member: false, path: '/generate', me: { sso: false, signed_in: false } });
+    check('feedback without a hub address: no Feedback link in the public footer', (await g.page.locator('a[href*="/feedback"]').count()) === 0);
+    await g.ctx.close();
+  }
+  // ---- the guest: one Feedback link in the public footer, next to Help, opening in a new tab ----
+  for (const [w, lang] of [[1440, 'en'], [390, 'en'], [390, 'ru'], [390, 'de']]) {
+    const { ctx, page } = await open({ width: w, member: false, path: '/generate', lang });
+    const f = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('footer.ft a[href*="/feedback"]')];
+      const help = document.querySelector('footer.ft a[href$="/help"]');
+      const a = all[0];
+      return { n: all.length, href: a?.getAttribute('href'), target: a?.getAttribute('target'), rel: a?.getAttribute('rel'), text: a?.textContent.trim(), sameList: !!a && a.closest('ul') === help?.closest('ul'), right: a?.getBoundingClientRect().right, vw: innerWidth };
+    });
+    check(`guest footer ${w} ${lang}: one Feedback link in the Help group, new tab, from=generate`, f.n === 1 && f.href === FB('generate') && f.target === '_blank' && f.rel === 'noopener' && f.sameList && f.right <= f.vw, JSON.stringify(f));
+    check(`guest footer ${w} ${lang}: no sideways scroll`, (await overflowX(page)) <= 0);
+    await ctx.close();
+  }
+  // ---- Privacy: one sentence after the existing ones, in the language, linking to the hub's privacy page ----
+  for (const [lang, w] of [['en', 1440], ['ru', 390], ['ja', 390]]) {
+    const { ctx, page } = await open({ width: w, path: '/privacy', lang });
+    const n = await page.evaluate(() => { const p = document.querySelector('#feedbackNote'); return p ? { text: p.textContent, href: p.querySelector('a')?.getAttribute('href'), last: p.parentElement.lastElementChild === p } : null; });
+    check(`privacy ${w} ${lang}: the Feedback sentence is the last paragraph and links to the hub privacy page`, !!n && n.last && n.href === 'https://hub.example.test/privacy' && !n.text.includes('{link}'), JSON.stringify(n));
+    check(`privacy ${w} ${lang}: no sideways scroll`, (await overflowX(page)) <= 0);
+    await ctx.close();
   }
   // ---- the family colour set picker (cookie hop_palette, attribute data-palette) and its contrast ----
   {

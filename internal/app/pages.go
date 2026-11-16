@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"html"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -37,7 +38,7 @@ const (
 	brandMark       = "/hop-assets/v9/apps/payhop/mark.svg"
 	brandStillLight = "/hop-assets/v9/home/payhop-light.webp"
 	brandStillDark  = "/hop-assets/v9/home/payhop-dark.webp"
-	legalUpdated    = "2026-11-11"
+	legalUpdated    = "2026-11-16"
 )
 
 type pageItem struct{ Head, Text string }
@@ -53,6 +54,7 @@ type publicPage struct {
 	Nav       string     // what the other pages call this one in their links
 	App       bool       // carries the WebApplication description (the home page)
 	Kind      string     // "home" (hero), "legal" (updated line and one card), "" (heading, then a card)
+	Feedback  bool       // a legal page that ends with the Feedback sentence when a hub address is set (priv.p6)
 }
 
 var publicPages = []publicPage{
@@ -82,7 +84,7 @@ var publicPages = []publicPage{
 	},
 	{
 		Path: "/privacy", Kind: "legal", Nav: "priv.t", Title: "priv.t", Desc: "priv.p1", H1: []string{"priv.t"}, Lead: "priv.p1",
-		Items: []pageItem{{"", "priv.p2"}, {"", "priv.p5"}, {"", "priv.p3"}, {"", "priv.p4"}},
+		Items: []pageItem{{"", "priv.p2"}, {"", "priv.p5"}, {"", "priv.p3"}, {"", "priv.p4"}}, Feedback: true,
 	},
 }
 
@@ -177,9 +179,19 @@ func originOf(index []byte) string {
 	return ""
 }
 
+// feedbackHub is the hub address the Feedback link and its Privacy sentence use: an http(s) address without a
+// trailing slash, or "" (no link, no sentence). Same rule as hubBase in web/src/lib/feedback.js.
+func feedbackHub(raw string) string {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+		return ""
+	}
+	return u.Scheme + "://" + u.Host + strings.TrimRight(u.Path, "/")
+}
+
 // buildPages is the shell as each public route is served in each language. The site's address is
 // the one index.html already states; without it the shell is served as it is.
-func buildPages(index []byte, dicts map[string]map[string]string) map[string]map[string][]byte {
+func buildPages(index []byte, dicts map[string]map[string]string, hub string) map[string]map[string][]byte {
 	origin := originOf(index)
 	if origin == "" {
 		return nil
@@ -188,7 +200,7 @@ func buildPages(index []byte, dicts map[string]map[string]string) map[string]map
 	for _, l := range pageLangs {
 		out[l] = map[string][]byte{}
 		for _, p := range publicPages {
-			out[l][p.Path] = renderPage(index, origin, p, dicts[l], l)
+			out[l][p.Path] = renderPage(index, origin, p, dicts[l], l, hub)
 		}
 	}
 	return out
@@ -233,7 +245,7 @@ func (a *App) sitemap(w http.ResponseWriter, r *http.Request) {
 
 var pageHTMLLangRe = regexp.MustCompile(`<html lang="[^"]*">`)
 
-func renderPage(index []byte, origin string, p publicPage, dict map[string]string, lang string) []byte {
+func renderPage(index []byte, origin string, p publicPage, dict map[string]string, lang, hub string) []byte {
 	text := func(keys ...string) string {
 		var parts []string
 		for _, k := range keys {
@@ -271,11 +283,11 @@ func renderPage(index []byte, origin string, p publicPage, dict map[string]strin
 	}
 	b = bytes.Replace(b, []byte("</head>"), []byte(head+"\n</head>"), 1)
 
-	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+firstView(p, text, lang)+`</div>`), 1)
+	return bytes.Replace(b, []byte(pageMount), []byte(`<div id="root">`+firstView(p, text, lang, hub)+`</div>`), 1)
 }
 
 // firstView is what the page shows before the app takes over: the app's own top bar and heading, with its classes.
-func firstView(p publicPage, text func(...string) string, lang string) string {
+func firstView(p publicPage, text func(...string) string, lang, hub string) string {
 	var s strings.Builder
 	suf := langSuffix(lang) // the plain links keep the language of the page they are on
 	href := func(path string) string { return path + suf }
@@ -321,6 +333,15 @@ func firstView(p publicPage, text func(...string) string, lang string) string {
 		s.WriteString(`<div class="wrap page legal"><div class="page-head"><h1>` + text(p.H1...) + `</h1><p>` + strings.ReplaceAll(text("legal.updated"), "{date}", legalUpdated) + `</p></div><div class="card">`)
 		for _, it := range append([]pageItem{{"", p.Lead}}, p.Items...) {
 			s.WriteString("<p>" + text(it.Text) + "</p>")
+		}
+		// the same sentence as web/src/lib/pages/Legal.svelte: only where the Feedback link exists (a hub address is set)
+		if base := feedbackHub(hub); p.Feedback && base != "" {
+			parts := strings.SplitN(text("priv.p6"), "{link}", 2)
+			s.WriteString(`<p id="feedbackNote">` + parts[0] + `<a href="` + html.EscapeString(base) + `/privacy" rel="noopener">` + text("priv.p6_link") + `</a>`)
+			if len(parts) > 1 {
+				s.WriteString(parts[1])
+			}
+			s.WriteString("</p>")
 		}
 		s.WriteString(`</div></div>`)
 	default:
