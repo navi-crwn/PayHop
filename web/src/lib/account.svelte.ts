@@ -13,6 +13,7 @@ export interface Account {
   name: string;
   email: string;
   hubUrl: string;
+  version: string;
   logoutUrl: string;
 }
 
@@ -24,6 +25,7 @@ export const account: Account = $state({
   name: '',
   email: '',
   hubUrl: '',
+  version: '',
   logoutUrl: ''
 });
 
@@ -38,6 +40,7 @@ export async function loadAccount(): Promise<void> {
     account.name = typeof me.name === 'string' ? me.name : '';
     account.email = typeof me.email === 'string' ? me.email : '';
     account.hubUrl = typeof me.hub_url === 'string' ? me.hub_url : '';
+    account.version = typeof me.version === 'string' ? me.version : '';
     account.logoutUrl = typeof me.logout_url === 'string' ? me.logout_url : '';
   } catch {
     /* offline or no server: stay a guest */

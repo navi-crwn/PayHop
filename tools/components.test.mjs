@@ -125,12 +125,23 @@ test('generator, signed in, saving off on the server: says so instead of showing
 
 test('privacy and terms are dated and mention what is stored', () => {
   const priv = html(Legal, { kind: 'priv' });
-  assert.match(priv, /Last updated 2026-11-11/);
+  assert.match(priv, /Last updated 2026-11-16/);
   assert.match(priv, /AES-256-GCM/);
   assert.match(priv, /never stores card numbers/);
   const terms = html(Legal, { kind: 'terms' });
   assert.match(terms, /Saving a payment method or a bill is your choice/);
   assert.match(terms, /does not process, hold or move money/);
+});
+
+test('privacy: with a hub address one sentence says the Feedback form belongs to HOP ID and links to its privacy policy; without one the sentence is gone', () => {
+  reset();
+  const withHub = html(Legal, { kind: 'priv' });
+  assert.match(withHub, /The Feedback link opens a form run by HOP ID at hel\.ink\. This app receives nothing from that form/);
+  assert.match(withHub, /<a href="https:\/\/hub\.example\.test\/privacy" rel="noopener">HOP ID privacy policy<\/a>/);
+  assert.match(withHub, /Nothing is sent to our server/); // the existing promise is untouched
+  assert.doesNotMatch(html(Legal, { kind: 'terms' }), /Feedback link/);
+  account.hubUrl = '';
+  assert.doesNotMatch(html(Legal, { kind: 'priv' }), /Feedback|feedbackNote/);
 });
 
 test('family picker (public top bar): HOP ID first, every other public app, never PayHop itself; the public address for a guest, the hub launcher when signed in', () => {

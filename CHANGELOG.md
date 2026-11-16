@@ -4,6 +4,17 @@ What changed in PayHop, newest release first. Each entry says what changed, wher
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16 - A Feedback link to the HOP ID form
+
+### Added
+- **Dashboard sidebar.** A "Feedback" link now sits right under "Help" in the links at the bottom of the sidebar. It opens the HOP ID feedback form in a new tab, so what you were doing in PayHop stays as it was. The link tells the form only which PayHop screen you came from and which version you use, never your name, what you typed or any address from your browser. Before, there was no quick way to report a problem or share an idea from inside PayHop.
+- **Public pages.** The footer of the public pages has the same "Feedback" link next to "Help", so visitors who are not signed in can use it too. Before, only the Help and Contact pages were offered.
+- **Privacy page.** One new sentence says that the Feedback link opens a form run by HOP ID at hel.ink, that PayHop itself receives nothing from that form, and where to read what the form keeps and for how long. Before, the page did not mention the form. The promise that nothing you type here is sent to our server is unchanged.
+- **Languages.** The link and the new sentence are available in all nine languages; in Indonesian the link reads "Masukan".
+
+### Changed
+- **Dashboard sidebar.** The links at the bottom now list seven items instead of six: Help, Feedback, Terms, Privacy, Changelog, GitHub, Announcement. The link appears only when the app is connected to a HOP ID site, because the form lives there; a stand-alone installation keeps the six links it had.
+
 ## [0.0.6] - 2026-11-14 - The family dashboard frame, colours and language addresses
 
 ### Added
@@ -70,7 +81,8 @@ The first release: payment QR codes and a bill splitter that run in your browser
 ### Fixed
 - **Downloaded picture.** The receiver name printed on the picture is cut at a whole character, never in the middle of an emoji.
 
-[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/navi-crwn/PayHop/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/navi-crwn/PayHop/compare/v0.0.6...v0.1.0
 [0.0.6]: https://github.com/navi-crwn/PayHop/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/navi-crwn/PayHop/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/navi-crwn/PayHop/compare/v0.0.3...v0.0.4

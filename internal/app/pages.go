@@ -37,7 +37,7 @@ const (
 	brandMark       = "/hop-assets/v9/apps/payhop/mark.svg"
 	brandStillLight = "/hop-assets/v9/home/payhop-light.webp"
 	brandStillDark  = "/hop-assets/v9/home/payhop-dark.webp"
-	legalUpdated    = "2026-11-11"
+	legalUpdated    = "2026-11-16"
 )
 
 type pageItem struct{ Head, Text string }
