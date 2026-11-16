@@ -30,9 +30,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : ' :: ' + detail}`);
 };
 
-const ME = { sso: true, signed_in: true, name: 'Helena', email: 'helena@example.test', hub_url: 'https://hub.example.test', logout_url: 'https://hub.example.test/logout', version: '0.1.0' };
-const GUEST = { sso: true, signed_in: false, hub_url: 'https://hub.example.test', version: '0.1.0' };
-const FB = (from) => `https://hub.example.test/feedback?app=payhop&from=${from}&v=0.1.0`;
+const ME = { sso: true, signed_in: true, name: 'Helena', email: 'helena@example.test', hub_url: 'https://hub.example.test', logout_url: 'https://hub.example.test/logout', version: '0.0.7' };
+const GUEST = { sso: true, signed_in: false, hub_url: 'https://hub.example.test', version: '0.0.7' };
+const FB = (from) => `https://hub.example.test/feedback?app=payhop&from=${from}&v=0.0.7`;
 const SAVED = { enabled: true, max_methods: 20, keep_bills: 200, unreadable: 0, bills: [],
   methods: [{ id: 1, format: 'paypal', label: 'PayPal personal', values: { user: 'helena' }, created_at: 1760000000, consent_at: 1760000000 }] };
 

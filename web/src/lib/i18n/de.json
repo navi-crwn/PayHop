@@ -228,7 +228,7 @@
   "priv.p2": "Wenn du dich mit einer HOP-ID anmeldest, speichern wir deine Konto-ID, deinen Namen, deine E-Mail und ein Sitzungs-Cookie, damit du angemeldet bleibst. Zahlungsdaten und Rechnungen werden nur gespeichert, wenn du dich dafür entscheidest (siehe unten).",
   "priv.p3": "Wir setzen keine Tracking- oder Werbe-Cookies. Dein Browser behält nur Design, Sprache und Oberflächenstil sowie beim Anmelden das Anmelde-Cookie.",
   "priv.p4": "Um nach deinen Daten zu fragen oder sie zu löschen, nutze die Kontaktseite auf hel.ink oder lösche dort deine HOP-ID.",
-  "priv.p6": "Der Link „Feedback“ öffnet ein Formular, das HOP-ID auf hel.ink betreibt. Diese App erhält aus diesem Formular nichts; was das Formular speichert und wie lange, steht in der {link}.",
+  "priv.p6": "Der Link „Feedback“ öffnet ein Formular auf der HOP-ID-Seite, mit der diese App verbunden ist. Diese App erhält aus diesem Formular nichts; was das Formular speichert und wie lange, steht in der {link}.",
   "priv.p6_link": "Datenschutzerklärung von HOP-ID",
   "ui.style": "Oberflächenstil",
   "ui.default": "Standard",

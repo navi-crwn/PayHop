@@ -1,18 +1,18 @@
 {
   "schema": 2,
   "sources": {
-    "PayHop": "0.1.0"
+    "PayHop": "0.0.7"
   },
   "entries": [
     {
       "kind": "tag",
       "date": "2026-11-16T00:00:00Z",
       "title": "A Feedback link to the HOP ID form",
-      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.1.0",
-      "id": "v0.1.0",
+      "url": "https://github.com/navi-crwn/PayHop/releases/tag/v0.0.7",
+      "id": "v0.0.7",
       "app": "PayHop",
       "repo": "PayHop",
-      "version": "0.1.0",
+      "version": "0.0.7",
       "summary": "",
       "items": [
         {
@@ -28,7 +28,7 @@
         {
           "type": "added",
           "where": "Privacy page",
-          "text": "One new sentence says that the Feedback link opens a form run by HOP ID at hel.ink, that PayHop itself receives nothing from that form, and where to read what the form keeps and for how long. Before, the page did not mention the form. The promise that nothing you type here is sent to our server is unchanged."
+          "text": "One new sentence says that the Feedback link opens a form on the HOP ID site this app is connected to, that PayHop itself receives nothing from that form, and where to read what the form keeps and for how long. Before, the page did not mention the form. The promise that nothing you type here is sent to our server is unchanged."
         },
         {
           "type": "added",

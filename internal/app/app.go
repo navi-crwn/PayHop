@@ -55,10 +55,19 @@ func New(cfg Config, d *db.DB, static fs.FS) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, dictionaries()), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
+	a := &App{cfg: cfg, db: d, static: static, index: index, pages: buildPages(index, dictionaries(), hubForPages(cfg)), used: usedTickets{m: map[string]int64{}}, started: time.Now()}
 	a.hubUp = newHubProbe(cfg.SSOURL).Up
 	a.ann = newAnnCache(cfg.SSOURL)
 	return a, nil
+}
+
+// hubForPages is the hub address the first view of the Privacy page may name: the same one /api/v1/me gives the
+// browser app, which is only there when sign-in is on.
+func hubForPages(cfg Config) string {
+	if cfg.SSOEnabled() {
+		return cfg.SSOURL
+	}
+	return ""
 }
 
 func (a *App) Handler() http.Handler {

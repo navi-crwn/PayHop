@@ -136,7 +136,7 @@ test('privacy and terms are dated and mention what is stored', () => {
 test('privacy: with a hub address one sentence says the Feedback form belongs to HOP ID and links to its privacy policy; without one the sentence is gone', () => {
   reset();
   const withHub = html(Legal, { kind: 'priv' });
-  assert.match(withHub, /The Feedback link opens a form run by HOP ID at hel\.ink\. This app receives nothing from that form/);
+  assert.match(withHub, /The Feedback link opens a form on the HOP ID site this app is connected to\. This app receives nothing from that form/);
   assert.match(withHub, /<a href="https:\/\/hub\.example\.test\/privacy" rel="noopener">HOP ID privacy policy<\/a>/);
   assert.match(withHub, /Nothing is sent to our server/); // the existing promise is untouched
   assert.doesNotMatch(html(Legal, { kind: 'terms' }), /Feedback link/);

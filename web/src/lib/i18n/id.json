@@ -228,7 +228,7 @@
   "priv.p2": "Jika Anda masuk dengan HOP ID, kami menyimpan ID akun, nama, email, dan cookie sesi agar Anda tetap masuk. Data pembayaran dan tagihan hanya disimpan jika Anda memilih menyimpannya (lihat di bawah).",
   "priv.p3": "Kami tidak memasang cookie pelacakan atau iklan. Browser Anda hanya menyimpan tema, bahasa, dan gaya antarmuka, serta cookie masuk saat Anda masuk.",
   "priv.p4": "Untuk menanyakan atau menghapus data Anda, gunakan halaman kontak di hel.ink, atau hapus HOP ID Anda di sana.",
-  "priv.p6": "Tautan Masukan membuka formulir yang dikelola HOP ID di hel.ink. Aplikasi ini tidak menerima apa pun dari formulir itu; apa yang disimpan formulir dan berapa lama dijelaskan di {link}.",
+  "priv.p6": "Tautan Masukan membuka formulir di situs HOP ID yang terhubung dengan aplikasi ini. Aplikasi ini tidak menerima apa pun dari formulir itu; apa yang disimpan formulir dan berapa lama dijelaskan di {link}.",
   "priv.p6_link": "kebijakan privasi HOP ID",
   "ui.style": "Gaya antarmuka",
   "ui.default": "Bawaan",

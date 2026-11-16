@@ -228,7 +228,7 @@
   "priv.p2": "Si vous vous connectez avec un HOP ID, nous conservons l’identifiant du compte, le nom, l’e-mail et un cookie de session pour que vous restiez connecté. Les données de paiement et les factures ne sont conservées que si vous choisissez de les enregistrer (voir ci-dessous).",
   "priv.p3": "Nous ne posons aucun cookie de suivi ni de publicité. Votre navigateur ne garde que votre thème, votre langue et le style d’interface, ainsi que le cookie de connexion quand vous vous connectez.",
   "priv.p4": "Pour interroger ou supprimer vos données, utilisez la page de contact de hel.ink ou supprimez-y votre HOP ID.",
-  "priv.p6": "Le lien Avis ouvre un formulaire géré par HOP ID sur hel.ink. Cette appli ne reçoit rien de ce formulaire ; ce que le formulaire conserve et pendant combien de temps est décrit dans la {link}.",
+  "priv.p6": "Le lien Avis ouvre un formulaire sur le site HOP ID auquel cette appli est connectée. Cette appli ne reçoit rien de ce formulaire ; ce que le formulaire conserve et pendant combien de temps est décrit dans la {link}.",
   "priv.p6_link": "politique de confidentialité de HOP ID",
   "ui.style": "Style d’interface",
   "ui.default": "Par défaut",
